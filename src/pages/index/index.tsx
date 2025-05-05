@@ -1,50 +1,149 @@
-import React, { useState } from 'react'
-import { View } from '@tarojs/components'
-import { Button, ConfigProvider, TextArea, Dialog } from '@nutui/nutui-react-taro'
-import enUS from '@nutui/nutui-react-taro/dist/locales/en-US'
-import zhCN from '@nutui/nutui-react-taro/dist/locales/zh-CN'
+import React, { useState, useEffect } from 'react'
+import { View, ScrollView, Text, Input } from '@tarojs/components'
+import WaterfallCard, { WaterfallCardProps } from '../../components/WaterfallCard/WaterfallCard'
+import { SearchBar } from 'antd-mobile'
+import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
-function Index() {
-  const [locale, setLocale] = useState(zhCN)
-  const localeKey = locale === zhCN ? 'zhCN' : 'enUS'
-  const [visible, setVisible] = useState(false)
-  const [translated] = useState({
-    zhCN: {
-      welcome: '欢迎使用 NutUI React 开发 Taro 多端项目。',
-      button: '使用英文',
-      open: '点击打开',
-    },
-    enUS: {
-      welcome: 'Welcome to use NutUI React to develop Taro multi-terminal projects.',
-      button: 'Use Chinese',
-      open: 'Click Me',
-    },
-  })
-  const handleSwitchLocale = () => {
-    setLocale(locale === zhCN ? enUS : zhCN)
-  }
+
+const sampleData: WaterfallCardProps[] = [
+  {
+    tag: '日本',
+    imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
+    title: '日本樱花季｜漫步京都古寺，感受春日浪漫',
+    days: 7,
+    people: 2,
+    cost: '15k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 2.8,
+  },
+  {
+    tag: '马尔代夫',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    title: '马尔代夫｜水上屋的奢华度假体验',
+    days: 5,
+    people: 2,
+    cost: '30k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 4.5,
+  },
+  {
+    tag: '马尔代夫',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    title: '马尔代夫｜水上屋的奢华度假体验',
+    days: 5,
+    people: 2,
+    cost: '30k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 4.5,
+  },
+  {
+    tag: '马尔代夫',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    title: '马尔代夫｜水上屋的奢华度假体验',
+    days: 5,
+    people: 2,
+    cost: '30k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 4.5,
+  },
+  {
+    tag: '日本',
+    imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
+    title: '日本樱花季｜漫步京都古寺，感受春日浪漫',
+    days: 7,
+    people: 2,
+    cost: '15k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 2.8,
+  },
+  {
+    tag: '日本',
+    imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
+    title: '日本樱花季｜漫步京都古寺，感受春日浪漫',
+    days: 7,
+    people: 2,
+    cost: '15k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 2.8,
+  },
+  {
+    tag: '马尔代夫',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    title: '马尔代夫｜水上屋的奢华度假体验',
+    days: 5,
+    people: 2,
+    cost: '30k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 4.5,
+  },{
+    tag: '马尔代夫',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    title: '马尔代夫｜水上屋的奢华度假体验水上屋的奢华度假体验水上屋的奢华度假体验水上屋的奢华度假体验水上屋的奢华度假体验',
+    days: 5,
+    people: 2,
+    cost: '30k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 4.5,
+  },{
+    tag: '马尔代夫',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    title: '马尔代夫｜水上屋的奢华度假体验',
+    days: 5,
+    people: 2,
+    cost: '30k',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+    nickname: 'Jane Doe',
+    likes: 4.5,
+  },
+]
+
+const HomePage: React.FC = () => {
+  const [list, setList] = useState<WaterfallCardProps[]>([])
+
+  useEffect(() => {
+    // TODO: 替换成真实接口调用
+    setList(sampleData)
+  }, [])
+
   return (
-    <ConfigProvider locale={locale}>
-      <View className='nutui-react-demo'>
-        <View>{translated[localeKey].welcome}</View>
-        <View>
-          <Button type='primary' onClick={handleSwitchLocale}>
-            {translated[localeKey].button}
-          </Button>
-          <Button type='success' onClick={() => setVisible(true)}>
-            {translated[localeKey].open}
-          </Button>
-          <Dialog
-            visible={visible}
-            onConfirm={() => setVisible(false)}
-            onCancel={() => setVisible(false)}>
-            {translated[localeKey].welcome}
-          </Dialog>
-          <TextArea disabled showCount maxLength={20} />
-        </View>
+    <View className="page page-index">
+
+      {/* 搜索框 */}
+      <View className="search-wrapper">
+        <SearchBar
+          placeholder="搜索游记/目的地"
+          className="search-input"
+          onSearch={(value) => console.log('搜索内容:', value)} // 搜索回调
+        />
       </View>
-    </ConfigProvider>
+
+      {/* 瀑布流内容部分 */}
+      <ScrollView scrollY className="wf-container" style={{ flexDirection: 'row' }}>
+        <View className="wf-column">
+          {list.filter((_, i) => i % 2 === 0).map((item, idx) => (
+            <WaterfallCard key={idx} {...item} />
+          ))}
+        </View>
+        <View className="wf-column">
+          {list.filter((_, i) => i % 2 === 1).map((item, idx) => (
+            <WaterfallCard key={idx} {...item} />
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* 自定义TabBar */}
+      <CustomTabBar />
+    </View>
   )
 }
 
-export default Index
+export default HomePage
+
