@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { View, ScrollView, Text, Input } from '@tarojs/components'
 import WaterfallCard, { WaterfallCardProps } from '../../components/WaterfallCard/WaterfallCard'
 import { SearchBar } from 'antd-mobile'
-import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
+
+import CustomTabBar from '../../components/CustomTabBar'
 
 const sampleData: WaterfallCardProps[] = [
   {
@@ -15,7 +16,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '15k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 2.8,
+    likes: 2800,
   },
   {
     tag: '马尔代夫',
@@ -26,7 +27,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '30k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 4.5,
+    likes: 4500,
   },
   {
     tag: '马尔代夫',
@@ -37,7 +38,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '30k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 4.5,
+    likes: 4500,
   },
   {
     tag: '马尔代夫',
@@ -48,7 +49,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '30k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 4.5,
+    likes: 4500,
   },
   {
     tag: '日本',
@@ -59,7 +60,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '15k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 2.8,
+    likes: 2800,
   },
   {
     tag: '日本',
@@ -70,7 +71,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '15k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 2.8,
+    likes: 2800,
   },
   {
     tag: '马尔代夫',
@@ -81,7 +82,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '30k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 4.5,
+    likes: 4500,
   },{
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
@@ -91,7 +92,7 @@ const sampleData: WaterfallCardProps[] = [
     cost: '30k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 4.5,
+    likes: 4500,
   },{
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
@@ -101,13 +102,19 @@ const sampleData: WaterfallCardProps[] = [
     cost: '30k',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
     nickname: 'Jane Doe',
-    likes: 4.5,
+    likes: 4500,
   },
 ]
 
 const HomePage: React.FC = () => {
   const [list, setList] = useState<WaterfallCardProps[]>([])
-
+  const handleLikeChange = (index: number, newLikes: number) => {
+    setList(prevPosts => {
+      const updatedPosts = [...prevPosts]
+      updatedPosts[index].likes = newLikes
+      return updatedPosts
+    })
+  }
   useEffect(() => {
     // TODO: 替换成真实接口调用
     setList(sampleData)
@@ -129,12 +136,12 @@ const HomePage: React.FC = () => {
       <ScrollView scrollY className="wf-container" style={{ flexDirection: 'row' }}>
         <View className="wf-column">
           {list.filter((_, i) => i % 2 === 0).map((item, idx) => (
-            <WaterfallCard key={idx} {...item} />
+            <WaterfallCard key={idx} {...item} onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}/>
           ))}
         </View>
         <View className="wf-column">
           {list.filter((_, i) => i % 2 === 1).map((item, idx) => (
-            <WaterfallCard key={idx} {...item} />
+            <WaterfallCard key={idx} {...item} onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}/>
           ))}
         </View>
       </ScrollView>

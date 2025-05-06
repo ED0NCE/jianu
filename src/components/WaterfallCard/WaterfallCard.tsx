@@ -26,6 +26,8 @@ export interface WaterfallCardProps {
   nickname?: string
   /** 点击回调 */
   onClick?: () => void
+  /** 点赞状态变化的回调函数 */
+  onLikeChange?: (newLikes: number) => void
 }
 
 const WaterfallCard: React.FC<WaterfallCardProps> = ({
@@ -40,10 +42,13 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
   avatarUrl,
   nickname,
   onClick,
+  onLikeChange
 }) => {
   const [isLiked, setIsLiked] = useState(false);
   const handleLikeClick = () => {
-    setIsLiked(!isLiked);
+    const newlikes = isLiked ? likes - 1 : likes + 1
+    setIsLiked(!isLiked)
+    onLikeChange && onLikeChange(newlikes)
   };
   return (
     <View className="wf-card" onClick={onClick}>
@@ -83,7 +88,7 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
           >
             {isLiked ? <HeartFill /> : <HeartOutline />}
             <Text className="wf-card__likes-num">
-              {likes}k
+              {likes}
             </Text>
           </Text>
         </View>

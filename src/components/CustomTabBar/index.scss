@@ -9,9 +9,28 @@
 }
 
 .tab-item {
-  padding: 10px;
-  font-size: 14px;
-  text-align: center;
+  padding: 10px 0 0 0;
+  font-size: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  .icon {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .icon-add {
+    position: absolute;
+    top: -10px;
+    font-size: 40px;
+    color: aquamarine;
+  }
+  .edit-text {
+    display: block;
+    padding-top: 22px;
+  }
 }
 
 .active {
