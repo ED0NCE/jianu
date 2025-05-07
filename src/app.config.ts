@@ -7,12 +7,11 @@ export default defineAppConfig({
     'pages/travelogue/travelogue',
 
     'pages/admin/admin',
-    'pages/adminlogin/adminlogin',
+    'pages/admin/adminlogin',
   ],
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',
-    navigationBarTitleText: 'WeChat',
     navigationBarTextStyle: 'black'
   }
 })
