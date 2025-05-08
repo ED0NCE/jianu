@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from 'react'
+import { View, Text, Image, ScrollView } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+import './messages.scss'
+import { useUserStore } from '../../store/userStore'
+import { LeftOutline } from 'antd-mobile-icons'
+// 消息类型
+enum MessageType {
+  REVIEW = 'review',   // 游记审核
+  LIKE = 'like',      // 游记点赞
+}
+
+// 审核状态
+enum ReviewStatus {
+  PENDING = 'pending',    // 审核中
+  APPROVED = 'approved',  // 通过
+  REJECTED = 'rejected',  // 拒绝
+}
+
+// 消息接口
+interface Message {
+  id: string
+  type: MessageType
+  title: string
+  content: string
+  status?: ReviewStatus
+  createdAt: string
+  isRead: boolean
+  thumbnail?: string
+  fromUser?: {
+    id: string
+    name: string
+    avatar: string
+  }
+}
+
+const MessagePage: React.FC = () => {
+  const { profile } = useUserStore()
+  const [activeTab, setActiveTab] = useState(0)
+  const [messages, setMessages] = useState<Message[]>([])
+
+  // 模拟消息数据
+  const mockMessages: Message[] = [
+    {
+      id: '1',
+      type: MessageType.REVIEW,
+      title: '游记审核通过',
+      content: '您的游记《北京三日游攻略》已审核通过，现在可在平台展示。',
+      status: ReviewStatus.APPROVED,
+      createdAt: '2023-11-15 10:30',
+      isRead: false,
+      thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
+    },
+    {
+      id: '2',
+      type: MessageType.REVIEW,
+      title: '游记审核中',
+      content: '您的游记《上海外滩一日游》正在审核中，请耐心等待。',
+      status: ReviewStatus.PENDING,
+      createdAt: '2023-11-14 16:45',
+      isRead: true,
+      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+    },
+    {
+      id: '3',
+      type: MessageType.REVIEW,
+      title: '游记审核未通过',
+      content: '您的游记《香港迪士尼攻略》未通过审核，原因：内容包含广告信息，请修改后重新提交。',
+      status: ReviewStatus.REJECTED,
+      createdAt: '2023-11-10 09:15',
+      isRead: true,
+      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+    },
+    {
+      id: '4',
+      type: MessageType.LIKE,
+      title: '获得点赞',
+      content: '旅行者小明点赞了您的游记《北京三日游攻略》',
+      createdAt: '2023-11-14 08:30',
+      isRead: false,
+      thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
+      fromUser: {
+        id: 'user1',
+        name: '旅行者小明',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
+      },
+    },
+    {
+      id: '5',
+      type: MessageType.LIKE,
+      title: '获得点赞',
+      content: '旅行达人张三点赞了您的游记《上海外滩一日游》',
+      createdAt: '2023-11-13 14:20',
+      isRead: true,
+      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+      fromUser: {
+        id: 'user2',
+        name: '旅行达人张三',
+        avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
+      },
+    },
+    {
+      id: '6',
+      type: MessageType.LIKE,
+      title: '获得点赞',
+      content: '摄影师李四点赞了您的游记《香港迪士尼攻略》',
+      createdAt: '2023-11-12 20:10',
+      isRead: true,
+      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+      fromUser: {
+        id: 'user3',
+        name: '摄影师李四',
+        avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61',
+      },
+    }
+  ]
+
+  // 标签页
+  const tabs = ['全部消息', '审核通知', '点赞']
+
+  // 获取消息
+  useEffect(() => {
+    // 模拟API请求
+    setTimeout(() => {
+      let filteredMessages = [...mockMessages]
+      
+      // 根据标签筛选消息
+      if (activeTab === 1) {
+        filteredMessages = mockMessages.filter(msg => msg.type === MessageType.REVIEW)
+      } else if (activeTab === 2) {
+        filteredMessages = mockMessages.filter(msg => msg.type === MessageType.LIKE)
+      }
+      
+      setMessages(filteredMessages)
+    }, 500)
+  }, [activeTab])
+
+  // 标记消息为已读
+  const markAsRead = (id: string) => {
+    setMessages(prev => 
+      prev.map(msg => 
+        msg.id === id ? { ...msg, isRead: true } : msg
+      )
+    )
+  }
+
+  // 点击消息
+  const handleMessageClick = (message: Message) => {
+    // 标记为已读
+    if (!message.isRead) {
+      markAsRead(message.id)
+    }
+
+    // 根据消息类型执行不同操作
+    if (message.type === MessageType.REVIEW) {
+      // 跳转到对应游记详情
+      Taro.navigateTo({ url: `/pages/travelogue/travelogue?id=${message.id}` })
+    } else if (message.type === MessageType.LIKE) {
+      // 跳转到对应游记详情
+      Taro.navigateTo({ url: `/pages/travelogue/travelogue?id=${message.id}` })
+    }
+  }
+
+  // 获取消息图标
+  const getMessageIcon = (message: Message) => {
+    if (message.type === MessageType.REVIEW) {
+      if (message.status === ReviewStatus.APPROVED) {
+        return 'message-icon-success'
+      } else if (message.status === ReviewStatus.REJECTED) {
+        return 'message-icon-reject'
+      } else {
+        return 'message-icon-pending'
+      }
+    } else {
+      return 'message-icon-like'
+    }
+  }
+
+  // 获取未读消息数
+  const getUnreadCount = () => {
+    return messages.filter(msg => !msg.isRead).length
+  }
+
+  // 全部标记为已读
+  const markAllAsRead = () => {
+    setMessages(prev => prev.map(msg => ({ ...msg, isRead: true })))
+  }
+
+  return (
+    <View className="page page-messages">
+      {/* 顶部标题栏 */}
+      <View className="message-header">
+        <View className='message-header-left' onClick={() => Taro.navigateBack()}>
+            <LeftOutline />
+        </View>
+        {getUnreadCount() > 0 && (
+          <Text className="mark-read" onClick={markAllAsRead}>全部标为已读</Text>
+        )}
+      </View>
+
+      {/* 标签页 */}
+      <View className="tabs">
+        {tabs.map((tab, idx) => (
+          <Text
+            key={idx}
+            className={`tab-item ${activeTab === idx ? 'active' : ''}`}
+            onClick={() => setActiveTab(idx)}
+          >
+            {tab}
+          </Text>
+        ))}
+      </View>
+
+      {/* 消息列表 */}
+      <ScrollView scrollY className="message-list">
+        {messages.length > 0 ? (
+          messages.map(message => (
+            <View
+              key={message.id}
+              className={`message-item ${!message.isRead ? 'unread' : ''}`}
+              onClick={() => handleMessageClick(message)}
+            >
+              <View className="message-left">
+                {message.type === MessageType.LIKE && message.fromUser ? (
+                  <Image className="user-avatar" src={message.fromUser.avatar} />
+                ) : (
+                  <View className={`message-icon ${getMessageIcon(message)}`} />
+                )}
+              </View>
+              <View className="message-content">
+                <View className="message-header">
+                  <Text className="message-title">{message.title}</Text>
+                  <Text className="message-time">{message.createdAt}</Text>
+                </View>
+                <Text className="message-text">{message.content}</Text>
+              </View>
+              {message.thumbnail && (
+                <Image className="message-thumbnail" src={message.thumbnail} mode="aspectFill" />
+              )}
+              {!message.isRead && <View className="unread-dot" />}
+            </View>
+          ))
+        ) : (
+          <View className="empty-state">
+            <View className="empty-icon" />
+            <Text className="empty-text">暂无消息</Text>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  )
+}
+
+export default MessagePage 

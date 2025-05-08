@@ -112,16 +112,16 @@
         margin-left: 4px;
       }
     }
+    .error-text {
+      color: red;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    
+    .success-text {
+      color: green;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+}
 
-}
-.error-text {
-  color: red;
-  font-size: 12px;
-  margin-top: 5px;
-}
-
-.success-text {
-  color: green;
-  font-size: 12px;
-  margin-top: 5px;
-}
