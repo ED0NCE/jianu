@@ -4,4 +4,135 @@
   h1 {
     margin-bottom: 20px;
   }
+}
+
+.admin-page {
+  background: #f5f6fa;
+  min-height: 100vh;
+  min-width: 100vw;
+  font-size: 1vw;
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    padding: 1.2vh 2vw;
+    border-radius: 0vw;
+    margin: 0 0vw 0 0vw;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    .admin-title { font-size: 1.5vw !important; font-weight: bold; }
+    .admin-search { display: flex; gap: 0.5vw; }
+    .search-input { width: 16vw; height: 4vh; font-size: 1vw; }
+    .search-btn { height: 4vh; font-size: 1vw; }
+    .admin-actions { display: flex; gap: 1vw; align-items: center; }
+    .sort-select { height: 4vh; font-size: 1vw; }
+    .logout-btn { background: #1976d2; color: #fff; font-size: 1vw; height: 4vh; }
+  }
+  .admin-main {
+    display: flex;
+    margin: 1vh 1vw;
+    gap: 2vw;
+    min-height: 80vh;
+  }
+  .admin-sidebar {
+    width: 18vw;
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    position: sticky;
+    top: 0vh;
+    align-self: flex-start;
+  }
+  .card {
+    background: #fff;
+    border-radius: 0.8vw;
+    padding: 2vh 1.5vw;
+    margin-bottom: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .card-title { font-weight: bold; margin-bottom: 1vh; font-size: 1.2vw; }
+  .chart-placeholder {
+    height: 16vh;
+    background: #f0f0f0;
+    border-radius: 50%;
+    margin-bottom: 1vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1vw;
+  }
+  .chart-legend span { display: inline-block; width: 1vw; height: 1vw; border-radius: 50%; margin-right: 0.3vw; }
+  .chart-legend .passed { background: #4caf50; }
+  .chart-legend .pending { background: #ff9800; }
+  .chart-legend .rejected { background: #f44336; }
+  .export-btn { background: #1976d2; color: #fff; margin-bottom: 1vh; font-size: 1vw; }
+  .batch-pass-btn { background: #4caf50; color: #fff; margin-bottom: 1vh; font-size: 1vw; }
+  .batch-reject-btn { background: #f44336; color: #fff; font-size: 1vw; }
+  .admin-content { flex: 1; min-width: 0; }
+  .result-title { font-weight: bold; margin-bottom: 2vh; font-size: 1.2vw; }
+  .travel-list { display: flex; flex-direction: column; gap: 2vh; }
+  .travel-card {
+    background: #fff;
+    border-radius: 0.8vw;
+    padding: 2vh 1.5vw;
+    border-left: 0.4vw solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative;
+  }
+  .travel-card.passed { border-color: #4caf50; }
+  .travel-card.pending { border-color: #ff9800; }
+  .travel-card.rejected { border-color: #f44336; }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    margin-bottom: 1vh;
+  }
+  .travel-title { font-size: 1.3vw; font-weight: bold; }
+  .travel-meta { color: #888; font-size: 1vw; }
+  .status { font-size: 1vw; padding: 0.2vw 0.8vw; border-radius: 0.5vw; margin-left: auto; }
+  .status.passed { background: #e8f5e9; color: #388e3c; }
+  .status.pending { background: #fff3e0; color: #f57c00; }
+  .status.rejected { background: #ffebee; color: #d32f2f; }
+  .card-desc { margin-bottom: 1vh; color: #555; font-size: 1vw; }
+  .card-img img { width: 100%; border-radius: 0.5vw; margin-bottom: 1vh; }
+  .card-actions {
+    display: flex;
+    gap: 0.6vw;
+    justify-content: flex-end;
+    align-items: flex-end;
+    margin-top: 2vh;
+  }
+  .card-actions Button {
+    min-width: 5vw;
+    max-width: 7vw;
+    padding: 0.5vh 1vw;
+    font-size: 0.95vw;
+  }
+  .pass-btn { background: #4caf50; color: #fff; font-size: 1vw; }
+  .reject-btn { background: #f44336; color: #fff; font-size: 1vw; }
+}
+
+.status-card ul li {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  margin-bottom: 0.5vh;
+}
+
+.admin-search {
+  position: relative;
+}
+.admin-search .search-input {
+  padding-left: 2.2vw;
+}
+.admin-search .search-icon {
+  position: absolute;
+  left: 0.6vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.2vw;
+  height: 1.2vw;
+  color: #888;
+  pointer-events: none;
 } 
