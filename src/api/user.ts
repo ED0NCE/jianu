@@ -1,26 +1,5 @@
 import { http } from './request';
 
-// 用户登录
-export const login = (data: { username: string; password: string }) =>
-  http.post('/user/login', data, { loading: true });
-
-// 用户注册
-export const register = (data: { username: string; password: string; email: string }) =>
-  http.post('/user/register', data, { loading: true });
-
-// 获取用户信息
-export const getUserInfo = () =>
-  http.get('/user/info', { loading: true });
-
-// 修改用户信息
-export const updateUserInfo = (data: { nickname?: string; avatar?: string; bio?: string }) =>
-  http.put('/user/info', data, { loading: true });
-
-// 获取游记列表
-export const getTravelogueList = (params?: any) => {
-  return http.get('/travelogue/list', { data: params });
-};
-
 // 获取游记详情
 export const getTravelogueDetail = (travelId: number) => {
   return http.get(`/travelogue/${travelId}`);
