@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useCallback, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, Input, Button, Image } from '@tarojs/components'
@@ -245,17 +244,3 @@ const LoginPage: React.FC = () => {
 
 export default LoginPage
 
-=======
-import React from 'react';
-import './login.scss';
-
-const Login: React.FC = () => {
-  return (
-    <div className="login-container">
-      <h1>Login Page</h1>
-    </div>
-  );
-};
-
-export default Login; 
->>>>>>> a8427a0291c2a259c1bb4b33480604a96e069aa2
