@@ -90,6 +90,7 @@
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "^5.1.0",
     "vite-plugin-imp": "^2.4.0",
-    "webpack": "5.78.0"
+    "webpack": "5.78.0",
+    "zustand": "^5.0.4"
   }
 }

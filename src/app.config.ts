@@ -5,7 +5,10 @@ export default defineAppConfig({
     'pages/edit/edit',
     'pages/admin/admin',
     'pages/personal/personal',
-    'pages/travelogue/travelogue'
+    'pages/travelogue/travelogue',
+    'pages/editInfo/editInfo',
+    'pages/messages/messages',
+    'pages/search/search'
   ],
   window: {
     backgroundTextStyle: 'light',

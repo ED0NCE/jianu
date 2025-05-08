@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { View, ScrollView, Text, Input } from '@tarojs/components'
 import WaterfallCard, { WaterfallCardProps } from '../../components/WaterfallCard/WaterfallCard'
 import { SearchBar } from 'antd-mobile'
+import Taro from '@tarojs/taro'
 import './index.scss'
 
 import CustomTabBar from '../../components/CustomTabBar'
@@ -120,6 +121,11 @@ const HomePage: React.FC = () => {
     setList(sampleData)
   }, [])
 
+  // 处理搜索框点击，跳转到搜索页面
+  const handleSearchClick = () => {
+    Taro.navigateTo({ url: '/pages/search/search' })
+  }
+
   return (
     <View className="page page-index">
 
@@ -128,7 +134,7 @@ const HomePage: React.FC = () => {
         <SearchBar
           placeholder="搜索游记/目的地"
           className="search-input"
-          onSearch={(value) => console.log('搜索内容:', value)} // 搜索回调
+          onFocus={handleSearchClick}
         />
       </View>
 

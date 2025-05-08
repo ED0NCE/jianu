@@ -5,7 +5,8 @@ import './personal.scss'
 
 import WaterfallCard, { WaterfallCardProps } from '../../components/WaterfallCard/WaterfallCard'
 import CustomTabBar from '../../components/CustomTabBar'
-import { userInfo } from 'os';
+import { useUserStore } from '../../store/userStore'
+import { FillinOutline } from 'antd-mobile-icons';
 
 interface Profile {
   userid: string
@@ -55,6 +56,10 @@ const PersonalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0)
   const [posts, setPosts] = useState<WaterfallCardProps[]>([])
   const [showMenu, setShowMenu] = useState(false)
+  const [avatarActive, setAvatarActive] = useState(false)
+  
+  // 从全局状态获取用户资料
+  const { profile, updateProfile } = useUserStore()
 
   // 点赞事件
   const handleLikeChange = (index: number, newLikes: number) => {
@@ -64,56 +69,127 @@ const PersonalPage: React.FC = () => {
       return updatedPosts
     })
   }
+  
   // 菜单事件
   const handleMenu = () => {
     setShowMenu(true)
   }
+  
   const handleMenuClose = () => {
     setShowMenu(false)
   }
+  
   const handleMsg = () => {
     setShowMenu(false)
-    Taro.showToast({ title: '消息列表', icon: 'none' })
+    Taro.navigateTo({ url: '/pages/messages/messages' })
   }
+  
   const handleEdit = () => {
     setShowMenu(false)
-    Taro.showToast({ title: '编辑成功', icon: 'none' })
+    Taro.navigateTo({ url: `/pages/editInfo/editInfo` })
   }
+  
   const handleLogout = () => {
     setShowMenu(false)
     Taro.showModal({
-          title: '提示',
-          content: '确定要删除游记吗？',
-          success: res => {
-            if (res.confirm) {
-              // 假设后端接口为 /api/travelogue/delete?id=xxx
-              Taro.request({
-                url: `https://your-backend-domain.com/api/travelogue/delete`,
-                method: 'POST',
-                data: { id: mockProfile.userid },
-                success: (resp) => {
-                  if (resp.statusCode === 200 && resp.data.success) {
-                    Taro.showToast({ title: '成功退出登录', icon: 'none' });
-                    setTimeout(() => {
-                      Taro.redirectTo({ url: '/pages/login/login' });
-                    }, 800);
-                  } else {
-                    Taro.showToast({ title: '退出失败', icon: 'none' });
-                  }
-                },
-                fail: () => {
-                  Taro.showToast({ title: '网络错误', icon: 'none' });
-                }
-              });
+      title: '提示',
+      content: '确定要退出登录吗？',
+      success: res => {
+        if (res.confirm) {
+          // 假设后端接口为 /api/user/logout
+          Taro.request({
+            url: `https://your-backend-domain.com/api/user/logout`,
+            method: 'POST',
+            data: { id: profile.userid },
+            success: (resp) => {
+              if (resp.statusCode === 200 && resp.data.success) {
+                Taro.showToast({ title: '成功退出登录', icon: 'none' });
+                setTimeout(() => {
+                  Taro.redirectTo({ url: '/pages/login/login' });
+                }, 800);
+              } else {
+                Taro.showToast({ title: '退出失败', icon: 'none' });
+              }
+            },
+            fail: () => {
+              Taro.showToast({ title: '网络错误', icon: 'none' });
             }
-          }
-        });
+          });
+        }
+      }
+    });
   }
+  
+  // 头像上传处理
+  const handleAvatarUpload = () => {
+    // 添加点击反馈
+    setAvatarActive(true)
+    setTimeout(() => setAvatarActive(false), 300)
+    
+    Taro.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: function (res) {
+        const tempFilePaths = res.tempFilePaths[0]
+        
+        // 显示上传中
+        Taro.showLoading({
+          title: '上传中...',
+        })
+        
+        // 上传图片到服务器（-------接口）
+        Taro.uploadFile({
+          url: 'https://your-backend-domain.com/api/upload/avatar',
+          filePath: tempFilePaths,
+          name: 'avatar',
+          formData: {
+            'userId': profile.userid
+          },
+          success: function (uploadRes) {
+            Taro.hideLoading()
+            
+            // 解析返回的数据
+            const data = JSON.parse(uploadRes.data)
+            if (data.success) {
+              // 更新头像到全局状态
+              updateProfile({
+                avatar: data.url || tempFilePaths
+              })
+              
+              Taro.showToast({
+                title: '头像更新成功',
+                icon: 'success'
+              })
+            } else {
+              Taro.showToast({
+                title: '上传失败',
+                icon: 'none'
+              })
+            }
+          },
+          fail: function () {
+            Taro.hideLoading()
+            
+            // 开发环境下，直接使用本地路径更新头像预览
+            updateProfile({
+              avatar: tempFilePaths
+            })
+            
+            Taro.showToast({
+              title: '头像已更新（本地预览）',
+              icon: 'none'
+            })
+          }
+        })
+      }
+    })
+  }
+  
   useEffect(() => {
     // TODO: 根据 activeTab 请求不同状态的数据
     setPosts(activeTab === 0 ? mockPosts : [])
   }, [activeTab])
-
 
   return (
     <View className="page page-personal">
@@ -127,15 +203,21 @@ const PersonalPage: React.FC = () => {
         <View className="popup-menu-mask" onClick={handleMenuClose}>
           <View className="popup-menu" onClick={e => e.stopPropagation()}>
             <View className="popup-menu-item" onClick={handleMsg}>
-              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%234FC3F7' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.03-.47-.09-.7l7.02-4.11A2.99 2.99 0 0 0 18 7.91c1.66 0 3 1.34 3 3s-1.34 3-3 3zm-12 2c-1.66 0-3-1.34-3-3s1.34-3 3-3c.24 0 .47.04.7.09l7.02-4.11A2.99 2.99 0 0 1 12 7.91c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3c-.76 0-1.44.3-1.96.77L4.91 11.3c-.05.23-.09.46-.09.7s.03.47.09.7l7.02 4.11c.52.47 1.2.77 1.96.77 1.66 0 3-1.34 3-3s-1.34-3-3-3z'/></svg>)`}} />
+              <View className="popup-menu-icon">
+                <FillinOutline />
+              </View>
               消息列表
             </View>
             {<View className="popup-menu-item" onClick={handleEdit}>
-              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FFB300' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm14.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>)`}} />
+              <View className="popup-menu-icon">
+                <FillinOutline />
+              </View>
               编辑资料
             </View>}
             {<View className="popup-menu-item delete" onClick={handleLogout}>
-              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FF5252' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z'/></svg>)`}} />
+              <View className='popup-menu-icon'>
+                <FillinOutline />
+              </View>
               退出登录
             </View>}
           </View>
@@ -144,17 +226,21 @@ const PersonalPage: React.FC = () => {
       {/* 个人信息简介 */}
       <View className="profile">
         <View className="profile-info">
-          <Image src={mockProfile.avatar} className="avatar" />
+          <Image 
+            src={profile.avatar} 
+            className={`avatar ${avatarActive ? 'avatar-active' : ''}`} 
+            onClick={handleAvatarUpload}
+          />
           <View className="info">
-            <View className="name">{mockProfile.name}</View>
+            <View className="name">{profile.name}</View>
             <View className="meta">
-              <Text>{mockProfile.travels} 游记</Text>
-              <Text className="meta-likes">{mockProfile.likes} 获赞</Text>
+              <Text>{profile.travels} 游记</Text>
+              <Text className="meta-likes">{profile.likes} 获赞</Text>
             </View>
           </View>
         </View>
         <View className="bio">
-          <Text>{mockProfile.bio}</Text>
+          <Text>{profile.bio || ''}</Text>
         </View>
       </View>
 

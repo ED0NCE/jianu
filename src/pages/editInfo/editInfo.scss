@@ -1,0 +1,174 @@
+/* 编辑个人资料页面样式 */
+.edit-info-page {
+  background-color: #f8f8f8;
+  min-height: 100vh;
+  /* 导航栏样式 */
+.nav-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.nav-bar-left {
+  display: flex;
+  align-items: center;
+}
+
+.back-icon {
+  width: 20px;
+  height: 20px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.back-text {
+  font-size: 14px;
+  color: #333;
+  margin-left: 5px;
+}
+
+.nav-bar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.page-content {
+  padding-bottom: 40px;
+}
+
+.info-form {
+  margin-top: 12px;
+}
+
+.form-item {
+  background-color: #fff;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  height: 40px;
+  font-size: 15px;
+  color: #333;
+  padding: 0;
+}
+
+.form-textarea {
+  width: 100%;
+  height: 100px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #333;
+  padding: 0;
+}
+
+.char-count {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  font-size: 12px;
+  color: #999;
+}
+
+.picker-value {
+  position: relative;
+  height: 40px;
+  line-height: 40px;
+  font-size: 15px;
+  color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arrow-right {
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23bbb" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.form-section {
+  margin-top: 12px;
+  background-color: #fff;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-title {
+  font-size: 15px;
+  color: #333;
+  font-weight: bold;
+}
+
+.toggle-icon {
+  width: 20px;
+  height: 20px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23bbb" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  transition: transform 0.3s;
+}
+
+.toggle-icon.active {
+  transform: rotate(180deg);
+}
+
+.password-section {
+  background-color: #fff;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 16px;
+  margin-top: 20px;
+}
+.btn-cancel {
+  flex: 1;
+  padding: 0 10px;
+  Button{
+    width: 100%;
+}
+}
+.btn-submit {
+  flex: 1;
+  padding: 0 10px;
+  Button{
+    width: 100%;
+}
+}
+}
+
+
