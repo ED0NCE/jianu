@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Input, Textarea, Button, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { DateRange } from 'react-date-range';
@@ -8,35 +8,92 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { TextArea } from '@nutui/nutui-react-taro';
 import './edit.scss';
+import { getTravelogueDetail, saveTravelogue } from '../../api/user';
+import { TravelogueData } from '../../types/travelogue';
 
 const Edit: React.FC = () => {
-  // 图片/视频列表
-  const [mediaList, setMediaList] = useState<any[]>([]);
-  // 标题、正文、位置、日期、人数、花费
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [location, setLocation] = useState('');
-  const [people, setPeople] = useState('');
-  const [budget, setBudget] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [participants, setParticipants] = useState(1);
+  const [expenditure, setExpenditure] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // 日期区间选择
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(),
-      endDate: new Date(),
-      key: 'selection',
-    },
-  ]);
+  const { id } = Taro.getCurrentInstance().router?.params || {};
+  const isEdit = !!id;  // 直接通过是否有 id 参数来判断
+
+  // 获取游记数据
+  useEffect(() => {
+    if (isEdit) {
+      const loadTravelogueData = async () => {
+        try {
+          const data = await getTravelogueDetail(parseInt(id)) as TravelogueData;
+          setTitle(data.title);
+          setContent(data.content);
+          setImages(data.images.map(img => img.image_url));
+          setLocation(data.location);
+          setStartDate(data.start_date);
+          setEndDate(data.end_date);
+          setParticipants(data.participants);
+          setExpenditure(data.expenditure);
+        } catch (error) {
+          console.error('加载游记数据失败:', error);
+        }
+      };
+      loadTravelogueData();
+    }
+  }, [id]);
+
+  // 提交表单
+  const handleSubmit = async () => {
+    if (!title || !content) {
+      Taro.showToast({ title: '请填写标题和内容', icon: 'none' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = {
+        title,
+        content,
+        images,
+        location,
+        start_date: startDate,
+        end_date: endDate,
+        participants,
+        expenditure
+      };
+
+      if (isEdit) {
+        await saveTravelogue({ ...data, travel_id: parseInt(id) });
+        Taro.showToast({ title: '更新成功', icon: 'success' });
+      } else {
+        await saveTravelogue(data);
+        Taro.showToast({ title: '发布成功', icon: 'success' });
+      }
+
+      setTimeout(() => {
+        Taro.navigateBack();
+      }, 1500);
+    } catch (error) {
+      console.error('提交失败:', error);
+      Taro.showToast({ title: '提交失败', icon: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 选择图片/视频
   const handleAddMedia = () => {
     Taro.chooseMedia({
-      count: 9 - mediaList.length,
+      count: 9 - images.length,
       mediaType: ['image', 'video'],
       success: res => {
         if (res.tempFiles && res.tempFiles.length > 0) {
-          setMediaList([...mediaList, ...res.tempFiles]);
+          setImages([...images, ...res.tempFiles.map(file => file.tempFilePath)]);
         }
       },
       fail: err => {
@@ -46,7 +103,7 @@ const Edit: React.FC = () => {
   };
   // 删除
   const handleRemoveMedia = (idx: number) => {
-    setMediaList(mediaList.filter((_, i) => i !== idx));
+    setImages(images.filter((_, i) => i !== idx));
   };
   // 位置
   const handleChooseLocation = () => {
@@ -54,75 +111,21 @@ const Edit: React.FC = () => {
       success: res => setLocation(res.name || ''),
     });
   };
-  // 发布
-  const handleSubmit = () => {
-    // 表单验证
-    if (!title.trim()) {
-      Taro.showToast({
-        title: '请输入标题',
-        icon: 'none'
-      });
-      return;
-    }
-    if (!content.trim()) {
-      Taro.showToast({
-        title: '请输入内容',
-        icon: 'none'
-      });
-      return;
-    }
-
-    // 准备提交数据
-    const submitData = {
-      title: title.trim(),
-      content: content.trim(),
-      location,
-      startDate: format(dateRange[0].startDate, 'yyyy-MM-dd'),
-      endDate: format(dateRange[0].endDate, 'yyyy-MM-dd'),
-      people: people || '2',
-      budget: budget || '1.5',
-      mediaList
-    };
-
-    // 提交到后端
-    Taro.request({
-      url: 'YOUR_API_URL', // 替换为实际的API地址
-      method: 'POST',
-      data: submitData,
-      success: () => {
-        Taro.showToast({
-          title: '发布成功',
-          icon: 'success',
-          duration: 2000,
-          success: () => {
-            // 延迟返回，让用户看到成功提示
-            setTimeout(() => {
-              Taro.navigateTo({
-                url: '/pages/index/index?needRefresh=true',
-                success: () => {
-                  // 关闭当前页面
-                  Taro.navigateBack({
-                    delta: 1
-                  });
-                }
-              });
-            }, 2000);
-          }
-        });
-      },
-      fail: (err) => {
-        console.error('发布失败', err);
-        Taro.showToast({
-          title: '发布失败，请重试',
-          icon: 'none'
-        });
-      }
-    });
-  };
   // 返回
   const handleBack = () => {
-    Taro.navigateBack();
+    Taro.switchTab({
+      url: '/pages/index/index'
+    });
   };
+
+  // 如果正在加载数据，显示加载状态
+  if (loading) {
+    return (
+      <View className="edit-page loading">
+        <View className="loading-spinner" />
+      </View>
+    );
+  }
 
   return (
     <View className="edit-page">
@@ -135,20 +138,13 @@ const Edit: React.FC = () => {
 
       {/* 媒体上传区 */}
       <View className="media-list">
-        {mediaList.map((item, idx) => (
+        {images.map((item, idx) => (
           <View className="media-item" key={idx}>
-            {item.type === 'video' ? (
-              <View className="media-video">
-                <Image className="media-thumb" src={item.thumbTempFilePath || item.tempFilePath} mode="aspectFill" />
-                <View className="icon play" />
-              </View>
-            ) : (
-              <Image className="media-thumb" src={item.tempFilePath} mode="aspectFill" />
-            )}
-            {mediaList.length > 1 && <View className="icon close" onClick={() => handleRemoveMedia(idx)} />}
+            <Image className="media-thumb" src={item} mode="aspectFill" />
+            {images.length > 1 && <View className="icon close" onClick={() => handleRemoveMedia(idx)} />}
           </View>
         ))}
-        {mediaList.length < 9 && (
+        {images.length < 9 && (
           <View className="media-item add" onClick={handleAddMedia}>
             <View className="icon add" />
             <Text>添加照片/视频</Text>
@@ -199,72 +195,34 @@ const Edit: React.FC = () => {
 
       {/* 日期 */}
       <View className="date-row-wrapper">
-        <View className="edit-row date-row" onClick={() => setShowDatePicker(!showDatePicker)}>
+        <View className="edit-row date-row">
           <View className="icon calendar" />
           <View className="date-col">
             <Text className="edit-row-label">开始日期</Text>
-            <Text className="date-value">{format(dateRange[0].startDate, 'yyyy-MM-dd')}</Text>
+            <Text className="date-value">{startDate}</Text>
           </View>
           <Text className="edit-row-label">-</Text>
           <View className="date-col">
             <Text className="edit-row-label">结束日期</Text>
-            <Text className="date-value">{format(dateRange[0].endDate, 'yyyy-MM-dd')}</Text>
+            <Text className="date-value">{endDate}</Text>
           </View>
-        </View>
-        <View className={`date-picker-popup${showDatePicker ? '' : ' hide'}`}>
-          <View className="date-picker-popup-header">
-            <Text className="date-picker-reset" onClick={() => setDateRange([{ startDate: new Date(), endDate: new Date(), key: 'selection' }])}>重置</Text>
-            <Text className="date-picker-ok" onClick={() => setShowDatePicker(false)}>完成</Text>
-          </View>
-          <DateRange
-            editableDateInputs={true}
-            onChange={item => setDateRange([item.selection])}
-            moveRangeOnFirstSelection={false}
-            ranges={dateRange}
-            locale={zhCN}
-            maxDate={new Date('2100-12-31')}
-            minDate={new Date('2000-01-01')}
-            showDateDisplay={false}
-          />
         </View>
       </View>
       <View className="custom-divider" />
 
       {/* 同行人数、花费 */}
-      <View className="edit-row" onClick={() => {
-        const input = document.querySelector('.people-input') as HTMLInputElement;
-        input?.focus();
-      }}>
+      <View className="edit-row">
         <View className="icon people" />
         <Text className="edit-row-label">同行人数</Text>
-        <Input 
-          className="edit-input people-input"
-          type="number"
-          value={people} 
-          onInput={e => setPeople(e.detail.value)} 
-          placeholder="2"
-          style={{ display: 'none' }}
-        />
-        <Text className="edit-input-value">{people || '2'}</Text>
+        <Text className="edit-input-value">{participants || '1'}</Text>
         <Text className="edit-row-unit">人</Text>
       </View>
       <View className="custom-divider" />
 
-      <View className="edit-row" onClick={() => {
-        const input = document.querySelector('.budget-input') as HTMLInputElement;
-        input?.focus();
-      }}>
+      <View className="edit-row">
         <View className="icon budget" />
         <Text className="edit-row-label">总花费</Text>
-        <Input 
-          className="edit-input budget-input"
-          type="digit"
-          value={budget} 
-          onInput={e => setBudget(e.detail.value)} 
-          placeholder="1.5"
-          style={{ display: 'none' }}
-        />
-        <Text className="edit-input-value">{budget || '1.5'}</Text>
+        <Text className="edit-input-value">{expenditure || '0'}</Text>
         <Text className="edit-row-unit">千元</Text>
       </View>
       <View className="custom-divider" />
