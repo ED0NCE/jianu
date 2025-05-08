@@ -51,7 +51,11 @@ const SearchPage: React.FC = () => {
 
   // 执行搜索
   const handleSearch = (value: string) => {
-    if (!value.trim()) return
+    if (!value.trim()) {
+      setSearchResults([])
+      setHasSearched(false)
+      return
+    }
     
     setSearchValue(value)
     saveSearchHistory(value)
@@ -62,6 +66,7 @@ const SearchPage: React.FC = () => {
     const mockResults = [
       // 模拟搜索结果数据，这里假设根据游记标题或用户昵称过滤
       {
+        id: 'travelogue001',
         tag: '日本',
         imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
         title: `${value}相关的游记`,
@@ -73,6 +78,31 @@ const SearchPage: React.FC = () => {
         likes: 2800,
       },
       {
+        id: 'travelogue002',
+        tag: '马尔代夫',
+        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+        title: `含有${value}的另一个游记`,
+        days: 5,
+        people: 2,
+        cost: '30k',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+        nickname: '旅行者',
+        likes: 4500,
+      },
+      {
+        id: 'travelogue003',
+        tag: '马尔代夫',
+        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+        title: `含有${value}的另一个游记`,
+        days: 5,
+        people: 2,
+        cost: '30k',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
+        nickname: '旅行者',
+        likes: 4500,
+      },
+      {
+        id: 'travelogue004',
         tag: '马尔代夫',
         imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
         title: `含有${value}的另一个游记`,
@@ -86,6 +116,14 @@ const SearchPage: React.FC = () => {
     ]
     
     setSearchResults(mockResults)
+  }
+
+  // 处理输入框变化
+  const handleInputChange = (value: string) => {
+    setSearchValue(value)
+    if (!value.trim()) {
+      setHasSearched(false)
+    }
   }
 
   // 点击历史记录进行搜索
@@ -102,6 +140,37 @@ const SearchPage: React.FC = () => {
     })
   }
 
+  // 处理卡片点击
+  const handleCardClick = (id: string) => {
+    Taro.navigateTo({
+      url: `/pages/travelogue/travelogue?id=${id}`
+    })
+  }
+
+  // 将结果分为左右两列
+  const getColumnData = () => {
+    if (!searchResults.length) return { leftColumn: [], rightColumn: [] }
+    
+    const leftColumn: WaterfallCardProps[] = []
+    const rightColumn: WaterfallCardProps[] = []
+    
+    // 确保两列长度尽量一致，内容均衡分配
+    searchResults.forEach((item, index) => {
+      if (index % 2 === 0) {
+        leftColumn.push(item)
+      } else {
+        rightColumn.push(item)
+      }
+    })
+    
+    return { leftColumn, rightColumn }
+  }
+
+  const { leftColumn, rightColumn } = getColumnData()
+
+  // 判断是否显示搜索历史
+  const showHistory = !hasSearched && searchHistory.length > 0
+
   return (
     <View className="page search-page">
       {/* 顶部搜索框 */}
@@ -110,7 +179,7 @@ const SearchPage: React.FC = () => {
           value={searchValue}
           placeholder="搜索游记/用户昵称"
           onSearch={handleSearch}
-          onChange={setSearchValue}
+          onChange={handleInputChange}
           className="search-input"
         />
         <Text className="cancel-btn" onClick={() => Taro.navigateBack()}>取消</Text>
@@ -119,7 +188,7 @@ const SearchPage: React.FC = () => {
       {/* 内容区域 */}
       <ScrollView scrollY className="search-content">
         {/* 搜索历史区域 */}
-        {!hasSearched && searchHistory.length > 0 && (
+        {showHistory && (
           <View className="search-history">
             <View className="history-header">
               <Text className="history-title">搜索历史</Text>
@@ -127,21 +196,13 @@ const SearchPage: React.FC = () => {
             </View>
             <View className="history-list">
               {searchHistory.map((item, index) => (
-                <SwipeAction
+                <View 
                   key={index}
-                  rightActions={[
-                    {
-                      key: 'delete',
-                      text: '删除',
-                      color: 'danger',
-                      onClick: () => removeHistoryItem(index)
-                    }
-                  ]}
+                  className="history-item" 
+                  onClick={() => searchFromHistory(item)}
                 >
-                  <View className="history-item" onClick={() => searchFromHistory(item)}>
-                    <Text>{item}</Text>
-                  </View>
-                </SwipeAction>
+                  <Text>{item}</Text>
+                </View>
               ))}
             </View>
           </View>
@@ -155,20 +216,32 @@ const SearchPage: React.FC = () => {
                 <Text className="result-title">搜索结果</Text>
                 <View className="wf-container">
                   <View className="wf-column">
-                    {searchResults.filter((_, i) => i % 2 === 0).map((item, idx) => (
+                    {leftColumn.map((item, idx) => (
                       <WaterfallCard 
                         key={idx} 
                         {...item} 
-                        onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}
+                        onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+                        onLikeChange={(newLikes) => {
+                          const index = idx * 2
+                          if (index < searchResults.length) {
+                            handleLikeChange(index, newLikes)
+                          }
+                        }}
                       />
                     ))}
                   </View>
                   <View className="wf-column">
-                    {searchResults.filter((_, i) => i % 2 === 1).map((item, idx) => (
+                    {rightColumn.map((item, idx) => (
                       <WaterfallCard 
                         key={idx} 
                         {...item} 
-                        onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}
+                        onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+                        onLikeChange={(newLikes) => {
+                          const index = idx * 2 + 1
+                          if (index < searchResults.length) {
+                            handleLikeChange(index, newLikes)
+                          }
+                        }}
                       />
                     ))}
                   </View>

@@ -64,7 +64,7 @@
     color: #999;
   }
   &__footer {
-    text-align: right;
+    /* 移除text-align: right */
   }
   &__likes {
     color: #999; // 默认颜色
@@ -76,27 +76,35 @@
       color: #ff5252; // 点赞后的颜色
     }
   }
-}
-.wf-card__footer {
-  position: relative;
-  display: flex;
-  align-items: center;
-  .wf-card__likes {
-    position: absolute;
-    right: 0;
+  .wf-card__footer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    .wf-card__likes {
+      position: absolute;
+      right: 0;
+    }
+  }
+  
+  .wf-card__avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  
+  .wf-card__nickname {
+    margin-right: 8px;
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 80px); /* 留出足够空间给点赞按钮 */
+    flex: 1;
+    text-align: left; /* 确保文字左对齐 */
   }
 }
 
-.wf-card__avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.wf-card__nickname {
-  margin-right: 8px;
-  font-size: 14px;
-  color: #666;
-}
 

@@ -9,6 +9,7 @@ import CustomTabBar from '../../components/CustomTabBar'
 
 const sampleData: WaterfallCardProps[] = [
   {
+    id: 'travelogue001',
     tag: '日本',
     imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
     title: '日本樱花季｜漫步京都古寺，感受春日浪漫',
@@ -20,6 +21,7 @@ const sampleData: WaterfallCardProps[] = [
     likes: 2800,
   },
   {
+    id: 'travelogue002',
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     title: '马尔代夫｜水上屋的奢华度假体验',
@@ -31,6 +33,7 @@ const sampleData: WaterfallCardProps[] = [
     likes: 4500,
   },
   {
+    id: 'travelogue003',
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     title: '马尔代夫｜水上屋的奢华度假体验',
@@ -42,6 +45,7 @@ const sampleData: WaterfallCardProps[] = [
     likes: 4500,
   },
   {
+    id: 'travelogue004',
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     title: '马尔代夫｜水上屋的奢华度假体验',
@@ -53,6 +57,7 @@ const sampleData: WaterfallCardProps[] = [
     likes: 4500,
   },
   {
+    id: 'travelogue005',
     tag: '日本',
     imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
     title: '日本樱花季｜漫步京都古寺，感受春日浪漫',
@@ -64,6 +69,7 @@ const sampleData: WaterfallCardProps[] = [
     likes: 2800,
   },
   {
+    id: 'travelogue006',
     tag: '日本',
     imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
     title: '日本樱花季｜漫步京都古寺，感受春日浪漫',
@@ -75,6 +81,7 @@ const sampleData: WaterfallCardProps[] = [
     likes: 2800,
   },
   {
+    id: 'travelogue007',
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     title: '马尔代夫｜水上屋的奢华度假体验',
@@ -85,6 +92,7 @@ const sampleData: WaterfallCardProps[] = [
     nickname: 'Jane Doe',
     likes: 4500,
   },{
+    id: 'travelogue008',
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     title: '马尔代夫｜水上屋的奢华度假体验水上屋的奢华度假体验水上屋的奢华度假体验水上屋的奢华度假体验水上屋的奢华度假体验',
@@ -95,6 +103,7 @@ const sampleData: WaterfallCardProps[] = [
     nickname: 'Jane Doe',
     likes: 4500,
   },{
+    id: 'travelogue009',
     tag: '马尔代夫',
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     title: '马尔代夫｜水上屋的奢华度假体验',
@@ -116,6 +125,7 @@ const HomePage: React.FC = () => {
       return updatedPosts
     })
   }
+  
   useEffect(() => {
     // TODO: 替换成真实接口调用
     setList(sampleData)
@@ -124,6 +134,13 @@ const HomePage: React.FC = () => {
   // 处理搜索框点击，跳转到搜索页面
   const handleSearchClick = () => {
     Taro.navigateTo({ url: '/pages/search/search' })
+  }
+  
+  // 处理卡片点击，跳转到详情页
+  const handleCardClick = (id: string) => {
+    Taro.navigateTo({
+      url: `/pages/travelogue/travelogue?id=${id}`
+    })
   }
 
   return (
@@ -142,12 +159,22 @@ const HomePage: React.FC = () => {
       <ScrollView scrollY className="wf-container" style={{ flexDirection: 'row' }}>
         <View className="wf-column">
           {list.filter((_, i) => i % 2 === 0).map((item, idx) => (
-            <WaterfallCard key={idx} {...item} onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}/>
+            <WaterfallCard 
+              key={idx} 
+              {...item} 
+              onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+              onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}
+            />
           ))}
         </View>
         <View className="wf-column">
           {list.filter((_, i) => i % 2 === 1).map((item, idx) => (
-            <WaterfallCard key={idx} {...item} onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}/>
+            <WaterfallCard 
+              key={idx} 
+              {...item} 
+              onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+              onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}
+            />
           ))}
         </View>
       </ScrollView>

@@ -28,6 +28,7 @@ const mockProfile: Profile = {
 
 const mockPosts: WaterfallCardProps[] = [
   {
+    id: 'travelogue101',
     tag: '',
     imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
     title: '圣托里尼的日落时光',
@@ -38,6 +39,7 @@ const mockPosts: WaterfallCardProps[] = [
     date: '2023-05-15',
   },
   {
+    id: 'travelogue102',
     tag: '',
     imageUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429',
     title: '悉尼歌剧院黄昏悉尼歌剧院黄昏悉尼歌剧院黄昏悉尼歌剧院黄昏悉尼歌剧院黄昏',
@@ -186,6 +188,13 @@ const PersonalPage: React.FC = () => {
     })
   }
   
+  // 处理卡片点击，跳转到详情页
+  const handleCardClick = (id: string) => {
+    Taro.navigateTo({
+      url: `/pages/travelogue/travelogue?id=${id}`
+    })
+  }
+  
   useEffect(() => {
     // TODO: 根据 activeTab 请求不同状态的数据
     setPosts(activeTab === 0 ? mockPosts : [])
@@ -261,12 +270,22 @@ const PersonalPage: React.FC = () => {
       <ScrollView scrollY className="wf-container">
         <View className="wf-column">
           {posts.filter((_, i) => i % 2 === 0).map((item, idx) => (
-            <WaterfallCard key={idx} {...item} onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}/>
+            <WaterfallCard 
+              key={idx} 
+              {...item} 
+              onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+              onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}
+            />
           ))}
         </View>
         <View className="wf-column">
           {posts.filter((_, i) => i % 2 === 1).map((item, idx) => (
-            <WaterfallCard key={idx} {...item} onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}/>
+            <WaterfallCard 
+              key={idx} 
+              {...item} 
+              onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+              onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}
+            />
           ))}
         </View>
       </ScrollView>

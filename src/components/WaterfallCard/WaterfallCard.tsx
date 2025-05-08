@@ -4,8 +4,10 @@ import { HeartOutline, HeartFill } from 'antd-mobile-icons'
 import './WaterfallCard.scss'
 
 export interface WaterfallCardProps {
-  /** 顶部小标签，比如 “日本”、“希腊” */
+  /** 顶部小标签，比如 "日本"、"希腊" */
   tag?: string
+  /** 游记ID */
+  id?: string
   /** 卡片图片 */
   imageUrl: string
   /** 标题 */
@@ -31,6 +33,7 @@ export interface WaterfallCardProps {
 }
 
 const WaterfallCard: React.FC<WaterfallCardProps> = ({
+  id,
   tag,
   imageUrl,
   title,
@@ -45,7 +48,9 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
   onLikeChange
 }) => {
   const [isLiked, setIsLiked] = useState(false);
-  const handleLikeClick = () => {
+  const handleLikeClick = (e) => {
+    // 阻止事件冒泡，避免触发卡片点击
+    e.stopPropagation();
     const newlikes = isLiked ? likes - 1 : likes + 1
     setIsLiked(!isLiked)
     onLikeChange && onLikeChange(newlikes)
@@ -82,7 +87,7 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
         <View className="wf-card__footer">
           {avatarUrl && <Image src={avatarUrl} className="wf-card__avatar" mode="aspectFill" />}
           {nickname && <Text className="wf-card__nickname">{nickname}</Text>}
-          <Text
+          <View
             className={`wf-card__likes ${isLiked ? 'wf-card__likes--active' : ''}`}
             onClick={handleLikeClick}
           >
@@ -90,7 +95,7 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
             <Text className="wf-card__likes-num">
               {likes}
             </Text>
-          </Text>
+          </View>
         </View>
 
       </View>
