@@ -1,72 +1,101 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { View, Image, Text } from '@tarojs/components'
 import { HeartOutline, HeartFill } from 'antd-mobile-icons'
 import Taro from '@tarojs/taro'
+import type { WaterfallCardProps } from '../../types/waterfallCard'
 import './WaterfallCard.scss'
+import { isLiked, toggleLikedTravelogue } from '../../utils/likeStorage'
+import { toggleLike } from '../../api/user'
 
-export interface WaterfallCardProps {
-  /** 顶部小标签，比如 "日本"、"希腊" */
-  tag?: string
-  /** 游记ID */
-  id?: string
-  /** 卡片图片 */
-  imageUrl: string
-  /** 标题 */
-  title: string
-  /** 天数 */
-  days?: number
-  /** 人数 */
-  people?: number
-  /** 花销，如 "15k" */
-  cost?: string
-  /** 点赞数，如 2.8k */
-  likes: number
-  /** 可选：发布日期，用于个人页面 */
-  date?: string
-  /** 头像 */
-  avatarUrl?: string
-  /** 作者昵称 */
-  nickname?: string
-  /** 点击回调 */
-  onClick?: () => void
-  /** 点赞状态变化的回调函数 */
-  onLikeChange?: (newLikes: number) => void
-}
+// 重新导出WaterfallCardProps类型
+export type { WaterfallCardProps };
 
-const WaterfallCard: React.FC<WaterfallCardProps> = ({
-  id,
-  tag,
-  imageUrl,
-  title,
-  days,
-  people,
-  cost,
-  likes,
-  date,
-  avatarUrl,
-  nickname,
-  onClick,
-  onLikeChange
-}) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const handleLikeClick = (e) => {
-    // 阻止事件冒泡，避免触发卡片点击
-    e.stopPropagation();
-    const newlikes = isLiked ? likes - 1 : likes + 1
-    if (isLiked) {
-      Taro.showToast({
-        title: '取消点赞',
-        icon: 'none'
-      })
-    }else {
-      Taro.showToast({
-        title: '点赞成功',
-        icon: 'none'
-      })
+/**
+ * WaterfallCard 组件显示一个瀑布流布局的游记卡片
+ */
+const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
+  const {
+    id,
+    tag,
+    imageUrl,
+    title,
+    days,
+    people,
+    cost,
+    likes,
+    date,
+    avatarUrl,
+    nickname,
+    onClick,
+    onLikeChange
+  } = props;
+
+  const [isLikedState, setIsLikedState] = useState(false);
+  const [localLikes, setLocalLikes] = useState(likes);
+
+  // 检查初始点赞状态
+  useEffect(() => {
+    if (id) {
+      setIsLikedState(isLiked(id));
     }
-    setIsLiked(!isLiked)
-    onLikeChange && onLikeChange(newlikes)
-  };
+  }, [id]);
+
+  // 同步传入的likes和本地状态
+  useEffect(() => {
+    setLocalLikes(likes);
+  }, [likes]);
+
+  /**
+   * 使用指数退避重试点赞API调用
+   */
+  const retryToggleLike = useCallback((travelId: number, retry = 0) => {
+    if (retry > 3) return; // Maximum 3 retries
+
+    setTimeout(() => {
+      toggleLike(travelId)
+        .catch(error => {
+          console.error(`重试点赞失败 (${retry + 1}/3):`, error);
+          retryToggleLike(travelId, retry + 1);
+        });
+    }, 1000 * (retry + 1)); // 逐渐增加重试间隔
+  }, []);
+
+  /**
+   * 处理点赞/取消点赞按钮点击
+   */
+  const handleLikeClick = useCallback((e) => {
+    // 阻止事件冒泡到卡片点击
+    e.stopPropagation();
+
+    if (!id) return;
+
+    const newLikes = isLikedState ? localLikes - 1 : localLikes + 1;
+
+    // 先更新UI状态，确保用户体验流畅
+    setIsLikedState(!isLikedState);
+    setLocalLikes(newLikes);
+
+    // 显示Toast通知
+    Taro.showToast({
+      title: isLikedState ? '取消点赞' : '点赞成功',
+      icon: 'none'
+    });
+
+    // 更新本地存储
+    toggleLikedTravelogue({...props, likes: newLikes});
+
+    // 点赞后立即通知父组件
+    onLikeChange && onLikeChange(newLikes);
+
+    // 异步调用API
+    toggleLike(Number(id))
+      .catch(error => {
+        console.error(isLikedState ? '取消点赞失败:' : '点赞失败:', error);
+        // 错误时重试
+        retryToggleLike(Number(id));
+      });
+  }, [id, isLikedState, localLikes, props, onLikeChange, retryToggleLike]);
+
   return (
     <View className="wf-card" onClick={onClick}>
       <View className="wf-card__img-wrap">
@@ -100,12 +129,12 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
           {avatarUrl && <Image src={avatarUrl} className="wf-card__avatar" mode="aspectFill" />}
           {nickname && <Text className="wf-card__nickname">{nickname}</Text>}
           <View
-            className={`wf-card__likes ${isLiked ? 'wf-card__likes--active' : ''}`}
+            className={`wf-card__likes ${isLikedState ? 'wf-card__likes--active' : ''}`}
             onClick={handleLikeClick}
           >
-            {isLiked ? <HeartFill /> : <HeartOutline />}
+            {isLikedState ? <HeartFill /> : <HeartOutline />}
             <Text className="wf-card__likes-num">
-              {likes}
+              {localLikes}
             </Text>
           </View>
         </View>
