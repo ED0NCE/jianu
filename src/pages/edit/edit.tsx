@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { TextArea } from '@nutui/nutui-react-taro';
+import { checkLogin } from '../../utils/auth';
 import './edit.scss';
 import { getTravelogueDetail, saveTravelogue } from '../../api/user';
 import { TravelogueData } from '../../types/travelogue';
@@ -233,4 +234,4 @@ const Edit: React.FC = () => {
   );
 };
 
-export default Edit; 
+export default Edit;

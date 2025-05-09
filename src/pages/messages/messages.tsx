@@ -3,7 +3,9 @@ import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import './messages.scss'
 import { useUserStore } from '../../store/userStore'
+import { checkLogin } from '../../utils/auth'
 import { LeftOutline } from 'antd-mobile-icons'
+
 // 消息类型
 enum MessageType {
   REVIEW = 'review',   // 游记审核
@@ -34,114 +36,157 @@ interface Message {
   }
 }
 
+// 模拟消息数据
+const mockMessages: Message[] = [
+  {
+    id: '1',
+    type: MessageType.REVIEW,
+    title: '游记审核通过',
+    content: '您的游记《北京三日游攻略》已审核通过，现在可在平台展示。',
+    status: ReviewStatus.APPROVED,
+    createdAt: '2023-11-15 10:30',
+    isRead: false,
+    thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
+  },
+  {
+    id: '2',
+    type: MessageType.REVIEW,
+    title: '游记审核中',
+    content: '您的游记《上海外滩一日游》正在审核中，请耐心等待。',
+    status: ReviewStatus.PENDING,
+    createdAt: '2023-11-14 16:45',
+    isRead: false,
+    thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+  },
+  {
+    id: '3',
+    type: MessageType.REVIEW,
+    title: '游记审核未通过',
+    content: '您的游记《香港迪士尼攻略》未通过审核，原因：内容包含广告信息，请修改后重新提交。',
+    status: ReviewStatus.REJECTED,
+    createdAt: '2023-11-10 09:15',
+    isRead: false,
+    thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+  },
+  {
+    id: '4',
+    type: MessageType.LIKE,
+    title: '获得点赞',
+    content: '旅行者小明点赞了您的游记《北京三日游攻略》',
+    createdAt: '2023-11-14 08:30',
+    isRead: false,
+    thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
+    fromUser: {
+      id: 'user1',
+      name: '旅行者小明',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
+    },
+  },
+  {
+    id: '5',
+    type: MessageType.LIKE,
+    title: '获得点赞',
+    content: '旅行达人张三点赞了您的游记《上海外滩一日游》',
+    createdAt: '2023-11-13 14:20',
+    isRead: false,
+    thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+    fromUser: {
+      id: 'user2',
+      name: '旅行达人张三',
+      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
+    },
+  },
+  {
+    id: '6',
+    type: MessageType.LIKE,
+    title: '获得点赞',
+    content: '摄影师李四点赞了您的游记《香港迪士尼攻略》',
+    createdAt: '2023-11-12 20:10',
+    isRead: false,
+    thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
+    fromUser: {
+      id: 'user3',
+      name: '摄影师李四',
+      avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61',
+    },
+  }
+]
+
 const MessagePage: React.FC = () => {
   const { profile } = useUserStore()
   const [activeTab, setActiveTab] = useState(0)
   const [messages, setMessages] = useState<Message[]>([])
+  const [filteredMessages, setFilteredMessages] = useState<Message[]>([])
 
-  // 模拟消息数据
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      type: MessageType.REVIEW,
-      title: '游记审核通过',
-      content: '您的游记《北京三日游攻略》已审核通过，现在可在平台展示。',
-      status: ReviewStatus.APPROVED,
-      createdAt: '2023-11-15 10:30',
-      isRead: false,
-      thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
-    },
-    {
-      id: '2',
-      type: MessageType.REVIEW,
-      title: '游记审核中',
-      content: '您的游记《上海外滩一日游》正在审核中，请耐心等待。',
-      status: ReviewStatus.PENDING,
-      createdAt: '2023-11-14 16:45',
-      isRead: true,
-      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
-    },
-    {
-      id: '3',
-      type: MessageType.REVIEW,
-      title: '游记审核未通过',
-      content: '您的游记《香港迪士尼攻略》未通过审核，原因：内容包含广告信息，请修改后重新提交。',
-      status: ReviewStatus.REJECTED,
-      createdAt: '2023-11-10 09:15',
-      isRead: true,
-      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
-    },
-    {
-      id: '4',
-      type: MessageType.LIKE,
-      title: '获得点赞',
-      content: '旅行者小明点赞了您的游记《北京三日游攻略》',
-      createdAt: '2023-11-14 08:30',
-      isRead: false,
-      thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
-      fromUser: {
-        id: 'user1',
-        name: '旅行者小明',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
-      },
-    },
-    {
-      id: '5',
-      type: MessageType.LIKE,
-      title: '获得点赞',
-      content: '旅行达人张三点赞了您的游记《上海外滩一日游》',
-      createdAt: '2023-11-13 14:20',
-      isRead: true,
-      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
-      fromUser: {
-        id: 'user2',
-        name: '旅行达人张三',
-        avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
-      },
-    },
-    {
-      id: '6',
-      type: MessageType.LIKE,
-      title: '获得点赞',
-      content: '摄影师李四点赞了您的游记《香港迪士尼攻略》',
-      createdAt: '2023-11-12 20:10',
-      isRead: true,
-      thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
-      fromUser: {
-        id: 'user3',
-        name: '摄影师李四',
-        avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61',
-      },
+  // 检查登录状态
+  useEffect(() => {
+    checkLogin();
+  }, []);
+
+  // 初始化消息数据（从本地存储加载或使用默认数据）
+  useEffect(() => {
+    try {
+      const messagesStr = Taro.getStorageSync('messages')
+
+      if (messagesStr) {
+        // 如果存在，使用存储的消息
+        const savedMessages = JSON.parse(messagesStr)
+        setMessages(savedMessages)
+      } else {
+        // 如果不存在，使用模拟数据并保存到本地
+        setMessages(mockMessages)
+        Taro.setStorageSync('messages', JSON.stringify(mockMessages))
+      }
+    } catch (error) {
+      console.error('初始化消息失败:', error)
+      // 出错时使用模拟数据
+      setMessages(mockMessages)
     }
-  ]
+  }, [])
 
   // 标签页
   const tabs = ['全部消息', '审核通知', '点赞']
 
-  // 获取消息
+  // 根据标签筛选消息
   useEffect(() => {
-    // 模拟API请求
-    setTimeout(() => {
-      let filteredMessages = [...mockMessages]
-      
-      // 根据标签筛选消息
-      if (activeTab === 1) {
-        filteredMessages = mockMessages.filter(msg => msg.type === MessageType.REVIEW)
-      } else if (activeTab === 2) {
-        filteredMessages = mockMessages.filter(msg => msg.type === MessageType.LIKE)
-      }
-      
-      setMessages(filteredMessages)
-    }, 500)
-  }, [activeTab])
+    let filtered = [...messages];
+
+    // 根据标签筛选消息
+    if (activeTab === 1) {
+      filtered = messages.filter(msg => msg.type === MessageType.REVIEW)
+    } else if (activeTab === 2) {
+      filtered = messages.filter(msg => msg.type === MessageType.LIKE)
+    }
+
+    setFilteredMessages(filtered)
+  }, [activeTab, messages])
 
   // 标记消息为已读
   const markAsRead = (id: string) => {
-    setMessages(prev => 
-      prev.map(msg => 
-        msg.id === id ? { ...msg, isRead: true } : msg
-      )
+    const updatedMessages = messages.map(msg =>
+      msg.id === id ? { ...msg, isRead: true } : msg
     )
+    setMessages(updatedMessages)
+
+    // 更新本地存储
+    try {
+      Taro.setStorageSync('messages', JSON.stringify(updatedMessages))
+    } catch (error) {
+      console.error('更新消息状态到本地存储失败:', error)
+    }
+  }
+
+  // 全部标记为已读
+  const markAllAsRead = () => {
+    const updatedMessages = messages.map(msg => ({ ...msg, isRead: true }))
+    setMessages(updatedMessages)
+
+    // 更新本地存储
+    try {
+      Taro.setStorageSync('messages', JSON.stringify(updatedMessages))
+    } catch (error) {
+      console.error('更新全部消息状态到本地存储失败:', error)
+    }
   }
 
   // 点击消息
@@ -178,12 +223,7 @@ const MessagePage: React.FC = () => {
 
   // 获取未读消息数
   const getUnreadCount = () => {
-    return messages.filter(msg => !msg.isRead).length
-  }
-
-  // 全部标记为已读
-  const markAllAsRead = () => {
-    setMessages(prev => prev.map(msg => ({ ...msg, isRead: true })))
+    return filteredMessages.filter(msg => !msg.isRead).length
   }
 
   return (
@@ -213,8 +253,8 @@ const MessagePage: React.FC = () => {
 
       {/* 消息列表 */}
       <ScrollView scrollY className="message-list">
-        {messages.length > 0 ? (
-          messages.map(message => (
+        {filteredMessages.length > 0 ? (
+          filteredMessages.map(message => (
             <View
               key={message.id}
               className={`message-item ${!message.isRead ? 'unread' : ''}`}
@@ -228,7 +268,7 @@ const MessagePage: React.FC = () => {
                 )}
               </View>
               <View className="message-content">
-                <View className="message-header">
+                <View className="message-item-header">
                   <Text className="message-title">{message.title}</Text>
                   <Text className="message-time">{message.createdAt}</Text>
                 </View>
@@ -251,4 +291,4 @@ const MessagePage: React.FC = () => {
   )
 }
 
-export default MessagePage 
+export default MessagePage

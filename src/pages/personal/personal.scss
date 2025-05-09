@@ -1,5 +1,6 @@
 .page-personal {
   position: relative;
+  padding-bottom: 55px;
   .personal-navbar{
     position: absolute;
     right: 5px;
@@ -21,10 +22,11 @@
       width: 64px;
       height: 64px;
       border-radius: 32px;
+      border: 1px solid #888;
       position: relative;
       overflow: hidden;
       cursor: pointer;
-      
+
       &::after {
         content: '';
         position: absolute;
@@ -40,7 +42,7 @@
         opacity: 0;
         transition: all 0.3s;
       }
-      
+
       &:hover::after, &:active::after, &.avatar-active::after {
         background-color: rgba(0, 0, 0, 0.4);
         opacity: 1;
@@ -73,6 +75,9 @@
     display: flex;
     background: #fff;
     border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 110; // 确保在tabs上方
     .tab-item {
       flex: 1;
       text-align: center;
@@ -84,20 +89,40 @@
       }
     }
   }
+  // 保留旧样式以兼容
   .wf-container {
     display: flex;
-    padding: 8px;
+    flex-direction: row;
+    margin-top: 10px;
   }
   .wf-column {
     flex: 1;
+    padding: 0 10px 0 15px;
+    &:last-child {
+      padding: 0 15px 0 5px;
+    }
+  }
+
+  // 空状态容器，占满整个瀑布流宽度
+  .empty-state-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  // 空状态样式
+  .empty-state {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    // padding: 0 10px 0 15px;
-    &:last-child {
-      padding: 0 15px 0 8px;
-    }
-    }
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    padding: 20px;
+    width: 100%;
+  }
 }
 
 .popup-menu-mask {
@@ -145,3 +170,5 @@
 .popup-menu-icon {
   margin-right: 2vw;
 }
+
+

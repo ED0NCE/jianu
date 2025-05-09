@@ -24,7 +24,7 @@ const CustomTabBar = () => {
     const inst = Taro.getCurrentInstance();
     const current = inst?.router?.path?.split('?')[0] || '';
     if (current === tabs[index].path) return;
-    Taro.switchTab({ url: tabs[index].path });
+    Taro.redirectTo({ url: tabs[index].path });
   };
 
   return (

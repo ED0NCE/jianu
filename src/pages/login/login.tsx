@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import Taro from '@tarojs/taro'
+import Taro, { getCurrentPages, useRouter } from '@tarojs/taro'
 import { View, Text, Input, Button, Image } from '@tarojs/components'
 import { debounce } from 'lodash'
 import './login.scss'
+import { useUserStore } from '../../store/userStore'
 
 import { UserOutline, CameraOutline,PicturesOutline } from 'antd-mobile-icons'
 
@@ -14,6 +15,27 @@ const LoginPage: React.FC = () => {
   const [state, setState] = useState<'login' | 'register'>('login')
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
   const [isUsernameRight, setIsUsernameRight] = useState<boolean>(true);
+  const [returnUrl, setReturnUrl] = useState<string>(''); // 记录返回的URL
+
+  // 获取路由参数
+  const router = useRouter();
+
+  useEffect(() => {
+    // 获取returnUrl参数
+    if (router.params && router.params.returnUrl) {
+      console.log(router.params.returnUrl)
+      // 确保returnUrl有正确的格式（以/开头）
+      let formattedUrl = decodeURIComponent(router.params.returnUrl as string);
+      if (!formattedUrl.startsWith('/')) {
+        formattedUrl = '/' + formattedUrl;
+      }
+      setReturnUrl(formattedUrl);
+    }
+  }, [router.params]);
+
+  // 引入用户store
+  const { login } = useUserStore()
+
   // 处理上传头像
   const chooseAvatar = async () => {
     try {
@@ -34,17 +56,200 @@ const LoginPage: React.FC = () => {
   const handleRegisterOrLogin = (state: string) => {
     if (formValidate(state)) {
       // 校验成功，则发请求
-      // TODO: 调用注册接口
       if(state === 'login') {
-        // 登录接口--用户名密码后端校验
-        console.log('登录信息：', { username, password })
-      }else {
+        // 显示加载
+        Taro.showLoading({ title: '登录中...' })
+
+        // 登录接口--用户名密码后端校验 (已注释，使用本地验证)
+        // Taro.request({
+        //   url: 'https://your-backend-domain.com/api/user/login',
+        //   method: 'POST',
+        //   data: { username, password },
+        //   success: (res) => {
+        //     Taro.hideLoading()
+
+        //     if (res.statusCode === 200 && res.data.success) {
+        //       // 保存用户信息和token到store和本地存储
+        //       login({
+        //         token: res.data.token,
+        //         profile: res.data.userInfo
+        //       })
+
+        //       Taro.showToast({
+        //         title: '登录成功',
+        //         icon: 'success',
+        //         duration: 1500,
+        //         success: () => {
+        //           // 获取页面历史
+        //           const pages = getCurrentPages()
+
+        //           // 如果有返回地址参数，优先使用它
+        //           if (returnUrl) {
+        //             setTimeout(() => {
+        //               Taro.redirectTo({
+        //                 url: returnUrl
+        //               })
+        //             }, 1500)
+        //             return;
+        //           }
+
+        //           // 如果有上一个页面，则返回
+        //           if (pages.length > 1) {
+        //             setTimeout(() => {
+        //               Taro.navigateBack()
+        //             }, 1500)
+        //           } else {
+        //             // 否则跳转到首页
+        //             setTimeout(() => {
+        //               Taro.switchTab({
+        //                 url: '/pages/index/index'
+        //               })
+        //             }, 1500)
+        //           }
+        //         }
+        //       })
+        //     } else {
+        //       Taro.showToast({
+        //         title: res.data.message || '登录失败，请检查用户名和密码',
+        //         icon: 'none'
+        //       })
+        //     }
+        //   },
+        //   fail: (err) => {
+        //     Taro.hideLoading()
+        //     Taro.showToast({
+        //       title: '网络错误，请稍后再试',
+        //       icon: 'none'
+        //     })
+        //     console.error('登录失败:', err)
+
+        //     // 开发环境模拟登录成功
+        //     if (process.env.NODE_ENV === 'development') {
+        //       // 使用模拟数据登录
+        //       login({
+        //         token: 'dev-token-123456',
+        //         profile: {
+        //           userid: 'user123',
+        //           avatar: avatar || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+        //           name: username || '旅行达人小美',
+        //           travels: 128,
+        //           likes: '2.4k',
+        //           bio: '热爱旅行和摄影的90后，去过30+国家，喜欢记录旅途中的美好瞬间。',
+        //           gender: 1,
+        //           region: '上海市',
+        //           birthday: '1995-01-01'
+        //         }
+        //       })
+
+        //       Taro.showToast({
+        //         title: '开发环境登录成功',
+        //         icon: 'success',
+        //         duration: 1500,
+        //         success: () => {
+        //           // 获取页面历史
+        //           const pages = getCurrentPages()
+
+        //           // 如果有返回地址参数，优先使用它
+        //           if (returnUrl) {
+        //             setTimeout(() => {
+        //               Taro.redirectTo({
+        //                 url: returnUrl
+        //               })
+        //             }, 1500)
+        //             return;
+        //           }
+
+        //           // 如果有上一个页面，则返回
+        //           if (pages.length > 1) {
+        //             setTimeout(() => {
+        //               Taro.navigateBack()
+        //             }, 1500)
+        //           } else {
+        //             // 否则跳转到首页
+        //             setTimeout(() => {
+        //               Taro.switchTab({
+        //                 url: '/pages/index/index'
+        //               })
+        //             }, 1500)
+        //           }
+        //         }
+        //       })
+        //     }
+        //   }
+        // })
+
+        // 模拟登录校验：检查用户名和密码
+        setTimeout(() => {
+          Taro.hideLoading()
+
+          if (username === 'yanshil' && password === '123456w') {
+            // 登录成功
+            login({
+              token: 'mock-token-123456',
+              profile: {
+                userid: 'yanshil',
+                avatar: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+                name: username,
+                travels: 128,
+                likes: '2.4k',
+                bio: '热爱旅行和摄影的90后，去过30+国家，喜欢记录旅途中的美好瞬间。',
+                gender: 1,
+                region: '上海市',
+                birthday: '1995-01-01'
+              }
+            })
+
+            Taro.showToast({
+              title: '登录成功',
+              icon: 'success',
+              duration: 1500,
+              success: () => {
+                // 获取页面历史
+                const pages = getCurrentPages()
+
+                console.log(returnUrl)
+                // 如果有返回地址参数，优先使用它
+                if (returnUrl) {
+                  setTimeout(() => {
+                    // 确保returnUrl格式正确
+                    Taro.redirectTo({
+                      url: returnUrl
+                    })
+                  }, 1500)
+                  return;
+                }
+
+                // 如果有上一个页面，则返回
+                if (pages.length > 1) {
+                  setTimeout(() => {
+                    Taro.navigateBack()
+                  }, 1500)
+                } else {
+                  // 否则跳转到首页
+                  setTimeout(() => {
+                    Taro.redirectTo({
+                      url: '/pages/index/index'
+                    })
+                  }, 1500)
+                }
+              }
+            })
+          } else {
+            // 登录失败
+            Taro.showToast({
+              title: '用户名或者密码不正确',
+              icon: 'none'
+            })
+          }
+        }, 800) // 模拟网络延迟
+      } else {
         // 注册接口
+        // TODO: 调用注册接口
         console.log('注册信息：', { username, password, confirmPwd, avatar })
+        Taro.navigateTo({
+          url: '/pages/index/index'
+        })
       }
-      Taro.navigateTo({
-        url: '/pages/index/index'
-      })
     }
   }
 

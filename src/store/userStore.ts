@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import Taro from '@tarojs/taro'
 
 export interface UserProfile {
   userid: string
@@ -14,37 +15,135 @@ export interface UserProfile {
 
 interface UserState {
   profile: UserProfile
+  token: string | null
   isLoggedIn: boolean
   updateProfile: (data: Partial<UserProfile>) => void
   setLoggedIn: (status: boolean) => void
+  login: (userData: { token: string, profile: UserProfile }) => void
+  logout: () => void
+  initFromStorage: () => boolean
 }
 
 // 默认用户数据
 const defaultProfile: UserProfile = {
-  userid: 'user123',
-  avatar: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
-  name: '旅行达人小美',
-  travels: 128,
-  likes: '2.4k',
-  bio: '热爱旅行和摄影的90后，去过30+国家，喜欢记录旅途中的美好瞬间。',
-  gender: 1,
-  region: '上海市',
-  birthday: '1995-01-01'
+  userid: '',
+  avatar: '',
+  name: '',
+  travels: 0,
+  likes: '0',
+  bio: '',
+  gender: 2,
+  region: '',
+  birthday: ''
 }
 
 // 创建store
-export const useUserStore = create<UserState>((set) => ({
-  profile: defaultProfile,
-  isLoggedIn: true,
-  
-  // 更新个人资料
-  updateProfile: (data) => set((state) => ({
-    profile: {
-      ...state.profile,
-      ...data
+export const useUserStore = create<UserState>((set, get) => {
+  // 初始化时尝试从本地存储加载数据
+  let initialProfile = defaultProfile;
+  let initialToken = null;
+  let initialLoggedIn = false;
+
+  try {
+    const token = Taro.getStorageSync('token');
+    const profileStr = Taro.getStorageSync('userProfile');
+    const isLoggedIn = Taro.getStorageSync('isLoggedIn') === 'true';
+
+    if (token && profileStr && isLoggedIn) {
+      initialToken = token;
+      initialProfile = JSON.parse(profileStr);
+      initialLoggedIn = true;
     }
-  })),
-  
-  // 设置登录状态
-  setLoggedIn: (status) => set(() => ({ isLoggedIn: status }))
-})) 
+  } catch (error) {
+    console.error('初始化本地存储数据失败:', error);
+  }
+
+  return {
+    profile: initialProfile,
+    token: initialToken,
+    isLoggedIn: initialLoggedIn,
+
+    // 更新个人资料（同时更新状态和本地存储）
+    updateProfile: (data) => {
+      const state = get();
+      const updatedProfile = {
+        ...state.profile,
+        ...data
+      };
+
+      // 更新本地存储
+      try {
+        Taro.setStorageSync('userProfile', JSON.stringify(updatedProfile));
+      } catch (error) {
+        console.error('更新本地存储失败:', error);
+      }
+
+      // 更新状态
+      set({ profile: updatedProfile });
+    },
+
+    // 设置登录状态
+    setLoggedIn: (status) => set(() => ({ isLoggedIn: status })),
+
+    // 登录并保存用户信息到本地
+    login: (userData) => {
+      // 更新状态
+      set(() => ({
+        isLoggedIn: true,
+        token: userData.token,
+        profile: userData.profile
+      }));
+
+      // 保存到本地存储
+      try {
+        Taro.setStorageSync('token', userData.token);
+        Taro.setStorageSync('userProfile', JSON.stringify(userData.profile));
+        Taro.setStorageSync('isLoggedIn', 'true');
+      } catch (error) {
+        console.error('保存登录信息到本地失败:', error);
+      }
+    },
+
+    // 登出并清除本地用户信息
+    logout: () => {
+      // 清除状态
+      set(() => ({
+        isLoggedIn: false,
+        token: null,
+        profile: defaultProfile
+      }));
+
+      // 清除本地存储
+      try {
+        Taro.removeStorageSync('token');
+        Taro.removeStorageSync('userProfile');
+        Taro.removeStorageSync('isLoggedIn');
+      } catch (error) {
+        console.error('清除本地存储失败:', error);
+      }
+    },
+
+    // 从本地存储初始化用户状态
+    initFromStorage: () => {
+      try {
+        const token = Taro.getStorageSync('token');
+        const profileStr = Taro.getStorageSync('userProfile');
+        const isLoggedIn = Taro.getStorageSync('isLoggedIn') === 'true';
+
+        if (token && profileStr && isLoggedIn) {
+          const profile = JSON.parse(profileStr);
+          set(() => ({
+            token,
+            profile,
+            isLoggedIn
+          }));
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('从本地存储初始化失败:', error);
+        return false;
+      }
+    }
+  };
+});

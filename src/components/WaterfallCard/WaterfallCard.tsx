@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, Image, Text } from '@tarojs/components'
 import { HeartOutline, HeartFill } from 'antd-mobile-icons'
+import Taro from '@tarojs/taro'
 import './WaterfallCard.scss'
 
 export interface WaterfallCardProps {
@@ -52,6 +53,17 @@ const WaterfallCard: React.FC<WaterfallCardProps> = ({
     // 阻止事件冒泡，避免触发卡片点击
     e.stopPropagation();
     const newlikes = isLiked ? likes - 1 : likes + 1
+    if (isLiked) {
+      Taro.showToast({
+        title: '取消点赞',
+        icon: 'none'
+      })
+    }else {
+      Taro.showToast({
+        title: '点赞成功',
+        icon: 'none'
+      })
+    }
     setIsLiked(!isLiked)
     onLikeChange && onLikeChange(newlikes)
   };
