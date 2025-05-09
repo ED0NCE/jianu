@@ -58,6 +58,10 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
       }
     },
     h5: {
+      devServer: {
+        host: '0.0.0.0',  // 允许局域网访问
+        port: 10086      // 指定端口
+      },
       publicPath: '/',
       staticDirectory: 'static',
       output: {

@@ -6,34 +6,6 @@ import dayjs from 'dayjs';
 import { useUserStore } from '../../store/userStore';
 import { getTravelogueDetail, toggleLike, deleteTravelogue } from '../../api/user';
 
-interface TravelogueData {
-  travel_id: number;
-  title: string;
-  content: string;
-  status: 'draft' | 'pending' | 'published' | 'rejected';
-  created_at: string;
-  updated_at: string;
-  location: string;
-  start_date: string;
-  end_date: string;
-  participants: number;
-  expenditure: number;
-  likes: number;
-  video_url?: string;
-  rejection_reason?: string;
-  author: {
-    user_id: string;
-    nickname: string;
-    avatar: string;
-  };
-  images: {
-    image_id: number;
-    image_url: string;
-    order: number;
-  }[];
-  is_liked: boolean;
-}
-
 // 骨架屏
 interface SkeletonScreenProps {
   onBack: () => void;
@@ -80,7 +52,7 @@ const Travelogue: React.FC = () => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
-  const [travelogueData, setTravelogueData] = useState<TravelogueData | null>(null);
+  const [travelogueData, setTravelogueData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const { profile } = useUserStore();
@@ -92,7 +64,7 @@ const Travelogue: React.FC = () => {
   };
 
   // 模拟数据
-  const mockTravelogueData: TravelogueData = {
+  const mockTravelogueData = {
     travel_id: 1,
     title: '大理古城与洱海的完美邂逅',
     content: '第一天，我们抵达大理古城，入住了古城内的一家特色客栈。客栈的庭院里种满了多肉植物，环境非常舒适。放下行李后，我们就在古城里闲逛，感受这座千年古城的魅力。\n\n第二天，我们租了电动车环洱海。一路上风景如画，蓝天白云，青山绿水，让人心旷神怡。我们在双廊古镇停留，品尝了当地特色美食。\n\n第三天，我们去了崇圣寺三塔，这是大理的标志性建筑。下午去了喜洲古镇，体验了白族扎染工艺。\n\n第四天，我们去了苍山，乘坐缆车上山，欣赏了壮丽的山景。晚上回到古城，在酒吧街感受夜生活。\n\n最后一天，我们在古城里买了一些特产，然后依依不舍地离开了这座美丽的城市。',
@@ -141,7 +113,7 @@ const Travelogue: React.FC = () => {
         }
 
         try {
-          const data = await getTravelogueDetail(parseInt(id)) as TravelogueData;
+          const data = await getTravelogueDetail(parseInt(id)) as any;
           setTravelogueData(data);
           setLikeCount(data.likes);
           setLiked(data.is_liked);
@@ -201,12 +173,12 @@ const Travelogue: React.FC = () => {
         }
       } catch (apiError) {
         console.warn('点赞API调用失败，使用本地模拟:', apiError);
-        if (liked) {
-          setLiked(false);
-          setLikeCount(likeCount - 1);
-        } else {
-          setLiked(true);
-          setLikeCount(likeCount + 1);
+    if (liked) {
+      setLiked(false);
+      setLikeCount(likeCount - 1);
+    } else {
+      setLiked(true);
+      setLikeCount(likeCount + 1);
         }
       }
     } catch (error) {
@@ -250,9 +222,9 @@ const Travelogue: React.FC = () => {
       success: res => {
         if (res.confirm) {
           deleteTravelogue(travelogueData.travel_id).then(() => {
-            setTimeout(() => {
-              Taro.redirectTo({ url: '/pages/index/index' });
-            }, 800);
+                setTimeout(() => {
+                  Taro.redirectTo({ url: '/pages/index/index' });
+                }, 800);
           }).catch(error => {
             console.error('删除失败:', error);
           });
@@ -309,12 +281,12 @@ const Travelogue: React.FC = () => {
             {isAuthor && (
               <>
                 <View className="popup-menu-item" onClick={handleEdit}>
-                  <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FFB300' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm14.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>)`}} />
-                  编辑游记
+              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FFB300' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm14.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>)`}} />
+              编辑游记
                 </View>
                 <View className="popup-menu-item delete" onClick={handleDelete}>
-                  <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FF5252' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z'/></svg>)`}} />
-                  删除游记
+              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FF5252' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z'/></svg>)`}} />
+              删除游记
                 </View>
               </>
             )}
@@ -400,4 +372,4 @@ const Travelogue: React.FC = () => {
   );
 };
 
-export default Travelogue;
+export default Travelogue; 

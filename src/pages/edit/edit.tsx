@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Input, Textarea, Button, Image, Video } from '@tarojs/components';
+import { View, Text, Input, Textarea, Button, Image, Video, Canvas } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { DateRange } from 'react-date-range';
 import { zhCN } from 'date-fns/locale';
@@ -8,40 +8,14 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { TextArea } from '@nutui/nutui-react-taro';
 import './edit.scss';
-import { getTravelogueDetail, saveTravelogue, uploadImage, uploadVideo, uploadVideoPoster } from '../../api/user';
-
-// 定义API请求和响应的类型
-interface TravelogueImage {
-  image_id: number;
-  image_url: string;
-  order: number;
-}
-
-interface TravelogueData {
-  travel_id: number | null;
-  title: string;
-  content: string;
-  images: TravelogueImage[];
-  location: string;
-  start_date: string;
-  end_date: string;
-  participants: number;
-  expenditure: number;
-  video_url: string;
-  video_poster: string;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+import { getTravelogueDetail, saveTravelogue, uploadImage, uploadVideo } from '../../api/user';
 
 const Edit: React.FC = () => {
   const router = useRouter();
   const { id } = router.params;
   const isEdit = !!id;
 
-  const [formData, setFormData] = useState<TravelogueData>({
+  const [formData, setFormData] = useState<any>({
     travel_id: null,
     title: '',
     content: '',
@@ -49,14 +23,44 @@ const Edit: React.FC = () => {
     location: '',
     start_date: '',
     end_date: '',
-    participants: 1,
-    expenditure: 0,
+    participants: null,
+    expenditure: null,
     video_url: '',
     video_poster: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [locationInput, setLocationInput] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // 日期区间选择
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection',
+    },
+  ]);
+
+  const [showDateValue, setShowDateValue] = useState(false);
+
+  // 点击页面其他地方关闭日期选择器
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.date-row-wrapper')) {
+        setShowDatePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (isEdit) {
@@ -66,7 +70,7 @@ const Edit: React.FC = () => {
 
   const fetchTravelogueDetail = async () => {
     try {
-      const res = await getTravelogueDetail(Number(id)) as ApiResponse<TravelogueData>;
+      const res = await getTravelogueDetail(Number(id)) as any;
       if (res.success) {
         setFormData(res.data);
       }
@@ -75,7 +79,7 @@ const Edit: React.FC = () => {
     }
   };
 
-  const handleInputChange = (field: keyof TravelogueData, value: any) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -88,45 +92,60 @@ const Edit: React.FC = () => {
 
     try {
       setUploading(true);
-      const res = await uploadImage(file) as ApiResponse<{ image_id: number; image_url: string }>;
+      // 检查文件类型
+      const isVideo = file.type.startsWith('video/');
+      const uploadFunction = isVideo ? uploadVideo : uploadImage;
+      const res = await uploadFunction(file) as any;
+      
       if (res.success) {
-        setFormData(prev => ({
-          ...prev,
-          images: [
-            ...prev.images,
-            {
-              image_id: res.data.image_id,
-              image_url: res.data.image_url,
-              order: prev.images.length,
-            },
-          ],
-        }));
+        if (isVideo) {
+          setFormData(prev => ({
+            ...prev,
+            video_url: res.data.video_url,
+            video_poster: prev.video_poster || `${res.data.video_url}?x-oss-process=video/snapshot,t_1000,f_jpg,w_0,h_0,m_fast`,
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            images: [
+              ...prev.images,
+              {
+                image_id: res.data.image_id,
+                image_url: res.data.image_url,
+                order: prev.images.length,
+              },
+            ],
+          }));
+        }
       }
     } catch (error) {
-      console.error('上传图片失败:', error);
+      console.error('上传失败:', error);
+      Taro.showToast({ 
+        title: '上传失败', 
+        icon: 'none' 
+      });
     } finally {
       setUploading(false);
     }
   };
 
   const handleVideoPosterUpload = async (e: any) => {
-    const file = e.detail.files[0];
+    const file = e.target.files[0];
     if (!file) return;
 
-    try {
-      setUploading(true);
-      const res = await uploadVideoPoster(file) as ApiResponse<{ poster_url: string }>;
-      if (res.success) {
-        setFormData(prev => ({
-          ...prev,
-          video_poster: res.data.poster_url,
-        }));
-      }
-    } catch (error) {
-      console.error('上传视频封面失败:', error);
-      Taro.showToast({ title: '上传封面失败', icon: 'none' });
-    } finally {
-      setUploading(false);
+    // 创建本地文件URL
+    const fileUrl = URL.createObjectURL(file);
+    
+    // 更新封面图
+    setFormData(prev => ({
+      ...prev,
+      video_poster: fileUrl
+    }));
+
+    // 重置input，这样同一个文件可以重复选择
+    const input = document.getElementById('poster-upload') as HTMLInputElement;
+    if (input) {
+      input.value = '';
     }
   };
 
@@ -136,7 +155,7 @@ const Edit: React.FC = () => {
 
     try {
       setUploading(true);
-      const res = await uploadVideo(file) as ApiResponse<{ video_url: string }>;
+      const res = await uploadVideo(file) as any;
       if (res.success) {
         setFormData(prev => ({
           ...prev,
@@ -165,6 +184,12 @@ const Edit: React.FC = () => {
       return;
     }
 
+    // 验证媒体
+    if (!formData.video_url && formData.images.length === 0) {
+      Taro.showToast({ title: '请至少上传一张图片或一个视频', icon: 'none' });
+      return;
+    }
+
     try {
       setLoading(true);
       const submitData = {
@@ -176,14 +201,14 @@ const Edit: React.FC = () => {
           order: img.order,
         })),
         location: formData.location,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
+        start_date: format(dateRange[0].startDate, 'yyyy-MM-dd'),
+        end_date: format(dateRange[0].endDate, 'yyyy-MM-dd'),
         participants: formData.participants,
         expenditure: formData.expenditure,
         video_url: formData.video_url,
         video_poster: formData.video_poster,
       };
-      const res = await saveTravelogue(submitData) as ApiResponse<{ travel_id: number }>;
+      const res = await saveTravelogue(submitData) as any;
       if (res.success) {
         Taro.showToast({ title: '保存成功', icon: 'success' });
         setTimeout(() => {
@@ -205,14 +230,85 @@ const Edit: React.FC = () => {
       mediaType: ['image', 'video'],
       success: res => {
         if (res.tempFiles && res.tempFiles.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, ...res.tempFiles.map(file => ({
+          // 检查是否包含视频
+          const hasVideo = res.tempFiles.some(file => file.tempFilePath.includes('video'));
+          if (hasVideo && formData.video_url) {
+            Taro.showToast({
+              title: '只能上传一个视频',
+              icon: 'none'
+            });
+            return;
+          }
+
+          // 先处理视频
+          const videoFile = res.tempFiles.find(file => file.tempFilePath.includes('video'));
+          if (videoFile) {
+            const videoUrl = videoFile.tempFilePath;
+            
+            // 创建视频元素来获取封面
+            const video = document.createElement('video');
+            
+            // 使用 Blob 和 URL.createObjectURL
+            fetch(videoUrl)
+              .then(response => response.blob())
+              .then(blob => {
+                const objectUrl = URL.createObjectURL(blob);
+                video.src = objectUrl;
+                video.currentTime = 0.1;
+                video.crossOrigin = 'anonymous';
+
+                video.onloadeddata = () => {
+                  if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
+                  // 创建 canvas 来获取视频帧
+                  const canvas = document.createElement('canvas');
+                  canvas.width = video.videoWidth;
+                  canvas.height = video.videoHeight;
+                  const ctx = canvas.getContext('2d');
+                  
+                  if (ctx) {
+                    try {
+                      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                      const posterUrl = canvas.toDataURL('image/jpeg', 0.7);
+                      
+                      setFormData(prev => ({
+                        ...prev,
+                        video_url: videoUrl,
+                        video_poster: posterUrl
+                      }));
+
+                      // 清理 URL 对象
+                      URL.revokeObjectURL(objectUrl);
+                    } catch (error) {
+                      console.error('绘制视频帧失败:', error);
+                    }
+                  }
+                };
+
+                // 强制加载视频
+                video.load();
+              })
+              .catch(error => {
+                console.error('获取视频文件失败:', error);
+              });
+          }
+
+          // 处理图片
+          const newImages = res.tempFiles
+            .filter(file => !file.tempFilePath.includes('video'))
+            .map((file, index) => ({
               image_id: 0,
               image_url: file.tempFilePath,
-              order: prev.images.length,
-            }))],
-          }));
+              order: index,
+              temp_id: Date.now() + index // 添加临时唯一ID
+            }));
+
+          if (newImages.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              images: [...prev.images, ...newImages]
+            }));
+          }
         }
       },
       fail: err => {
@@ -229,10 +325,43 @@ const Edit: React.FC = () => {
     }));
   };
 
+  // 搜索地址
+  const searchLocation = async (keyword: string) => {
+    if (!keyword) {
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(keyword)}&limit=5`
+      );
+      const data = await response.json();
+      setLocationSuggestions(data);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('搜索地址失败:', error);
+    }
+  };
+
+  // 选择地址
+  const handleLocationSelect = (location: any) => {
+    setFormData(prev => ({
+      ...prev,
+      location: location.display_name
+    }));
+    setLocationInput(location.display_name);
+    setShowSuggestions(false);
+  };
+
   // 位置
   const handleChooseLocation = () => {
     Taro.chooseLocation({
-      success: res => setFormData(prev => ({ ...prev, location: res.name || '' })),
+      success: res => setFormData(prev => ({
+        ...prev,
+        location: res.name || ''
+      })),
     });
   };
 
@@ -260,15 +389,58 @@ const Edit: React.FC = () => {
         </View>
       </View>
 
+      {/* 隐藏的视频元素和画布 */}
+      <Video
+        id="tempVideo"
+        src={formData.video_url}
+        style={{ display: 'none' }}
+      />
+      <Canvas
+        id="tempCanvas"
+        style={{ display: 'none' }}
+      />
+
       {/* 媒体上传区 */}
       <View className="media-list">
+        {formData.video_url && (
+          <View className="media-item video-item">
+            <Image 
+              className="media-thumb" 
+              src={formData.video_poster || formData.video_url}
+              mode="aspectFill"
+            />
+            <View className="video-controls">
+              <View className="upload-btn" onClick={() => document.getElementById('poster-upload')?.click()}>
+                <View className="icon play" />
+                <Text>点击更换封面图</Text>
+              </View>
+            </View>
+            {formData.images.length > 0 && (
+              <View className="icon close" onClick={() => {
+                setFormData(prev => ({
+                  ...prev,
+                  video_url: '',
+                  video_poster: '',
+                }));
+              }} />
+            )}
+            <input
+              id="poster-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleVideoPosterUpload}
+              disabled={uploading}
+              style={{ display: 'none' }}
+            />
+          </View>
+        )}
         {formData.images.map((item, idx) => (
-          <View className="media-item" key={item.image_id}>
+          <View className="media-item" key={item.temp_id || item.image_id}>
             <Image className="media-thumb" src={item.image_url} mode="aspectFill" />
-            {formData.images.length > 1 && <View className="icon close" onClick={() => handleRemoveImage(idx)} />}
+            {(formData.images.length > 1 || formData.video_url) && <View className="icon close" onClick={() => handleRemoveImage(idx)} />}
           </View>
         ))}
-        {formData.images.length < 9 && (
+        {(formData.images.length < 9 || !formData.video_url) && (
           <View className="media-item add" onClick={handleAddMedia}>
             <View className="icon add" />
             <Text>添加照片/视频</Text>
@@ -283,6 +455,13 @@ const Edit: React.FC = () => {
         value={formData.title}
         onInput={e => handleInputChange('title', e.detail.value)}
         maxlength={30}
+        style={{
+          fontFamily: '"PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
+          fontSize: '4.2vw',
+          fontWeight: 500,
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale'
+        }}
       />
       <View className="custom-divider" />
 
@@ -298,8 +477,8 @@ const Edit: React.FC = () => {
           fontSize: '4.2vw',
           padding: '2vw 0.5vw 0 0.5vw',
           lineHeight: '1.5',
-          color: '#888',
-          backgroundColor: '#fafbfc',
+          color: '#333',
+          backgroundColor: '#fff',
           border: 'none',
           outline: 'none',
           minHeight: '18vw',
@@ -310,26 +489,72 @@ const Edit: React.FC = () => {
       <View className="custom-divider" />
 
       {/* 位置 */}
-      <View className="edit-row" onClick={handleChooseLocation}>
+      <View className="edit-row location-row">
         <View className="icon location" />
-        <Text className="edit-row-label">{formData.location ? formData.location : '添加位置'}</Text>
-        <View className="icon arrow" />
+        <View className="location-input-wrapper">
+          <Input
+            className="location-input"
+            value={locationInput}
+            placeholder="输入并搜索地址"
+            onInput={e => {
+              const value = e.detail.value;
+              setLocationInput(value);
+              searchLocation(value);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+          />
+          {showSuggestions && locationSuggestions.length > 0 && (
+            <View className="location-suggestions">
+              {locationSuggestions.map((item, index) => (
+                <View
+                  key={index}
+                  className="suggestion-item"
+                  onClick={() => handleLocationSelect(item)}
+                >
+                  <Text>{item.display_name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </View>
       <View className="custom-divider" />
 
       {/* 日期 */}
       <View className="date-row-wrapper">
-        <View className="edit-row date-row">
+        <View className="edit-row date-row" onClick={() => setShowDatePicker(!showDatePicker)}>
           <View className="icon calendar" />
           <View className="date-col">
             <Text className="edit-row-label">开始日期</Text>
-            <Text className="date-value">{formData.start_date}</Text>
+            <Text className="date-value">{showDateValue ? format(dateRange[0].startDate, 'yyyy-MM-dd') : '待选择'}</Text>
           </View>
           <Text className="edit-row-label">-</Text>
           <View className="date-col">
             <Text className="edit-row-label">结束日期</Text>
-            <Text className="date-value">{formData.end_date}</Text>
+            <Text className="date-value">{showDateValue ? format(dateRange[0].endDate, 'yyyy-MM-dd') : '待选择'}</Text>
           </View>
+        </View>
+        <View className={`date-picker-popup${showDatePicker ? '' : ' hide'}`}>
+          <View className="date-picker-popup-header">
+            <Text className="date-picker-reset" onClick={() => {
+              setDateRange([{ startDate: new Date(), endDate: new Date(), key: 'selection' }]);
+              setShowDateValue(false);
+            }}>重置</Text>
+            <Text className="date-picker-ok" onClick={() => setShowDatePicker(false)}>完成</Text>
+          </View>
+          <DateRange
+            editableDateInputs={true}
+            onChange={item => {
+              setDateRange([item.selection]);
+              setShowDateValue(true);
+            }}
+            moveRangeOnFirstSelection={false}
+            ranges={dateRange}
+            locale={zhCN}
+            maxDate={new Date('2100-12-31')}
+            minDate={new Date('2000-01-01')}
+            showDateDisplay={false}
+          />
         </View>
       </View>
       <View className="custom-divider" />
@@ -338,7 +563,9 @@ const Edit: React.FC = () => {
       <View className="edit-row">
         <View className="icon people" />
         <Text className="edit-row-label">同行人数</Text>
-        <Text className="edit-input-value">{formData.participants || '1'}</Text>
+        <Text className={`edit-input-value ${!formData.participants ? 'placeholder' : ''}`}>
+          {formData.participants || '请填写'}
+        </Text>
         <Text className="edit-row-unit">人</Text>
       </View>
       <View className="custom-divider" />
@@ -346,59 +573,12 @@ const Edit: React.FC = () => {
       <View className="edit-row">
         <View className="icon budget" />
         <Text className="edit-row-label">总花费</Text>
-        <Text className="edit-input-value">{formData.expenditure || '0'}</Text>
+        <Text className={`edit-input-value ${!formData.expenditure ? 'placeholder' : ''}`}>
+          {formData.expenditure || '请填写'}
+        </Text>
         <Text className="edit-row-unit">千元</Text>
       </View>
       <View className="custom-divider" />
-
-      {/* 视频 */}
-      <View className='form-item'>
-        <Text className='label'>视频</Text>
-        <View className='video-upload'>
-          {formData.video_url ? (
-            <View className='video-preview'>
-              <Video 
-                className='video' 
-                src={formData.video_url}
-                poster={formData.video_poster}
-              />
-              <View className='video-controls'>
-                <View className='upload-btn' onClick={() => document.getElementById('poster-upload')?.click()}>
-                  <Text className='icon'>📷</Text>
-                  <Text>更换封面</Text>
-                </View>
-                <View className='remove-btn' onClick={() => {
-                  setFormData(prev => ({
-                    ...prev,
-                    video_url: '',
-                    video_poster: '',
-                  }));
-                }}>
-                  <Text className='icon'>×</Text>
-                </View>
-              </View>
-              <input
-                id='poster-upload'
-                type='file'
-                accept='image/*'
-                onChange={handleVideoPosterUpload}
-                disabled={uploading}
-                style={{ display: 'none' }}
-              />
-            </View>
-          ) : (
-            <View className='upload-btn'>
-              <Text className='icon'>+</Text>
-              <input
-                type='file'
-                accept='video/*'
-                onChange={handleVideoUpload}
-                disabled={uploading}
-              />
-            </View>
-          )}
-        </View>
-      </View>
 
       {/* 发布按钮 */}
       <Button className="edit-submit" onClick={handleSubmit}>发布</Button>
@@ -406,4 +586,4 @@ const Edit: React.FC = () => {
   );
 };
 
-export default Edit; 
+export default Edit;

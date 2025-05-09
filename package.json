@@ -38,6 +38,7 @@
   "dependencies": {
     "@babel/runtime": "^7.21.5",
     "@mui/icons-material": "^7.1.0",
+    "@nutui/nutui-react": "^3.0.10",
     "@nutui/nutui-react-taro": "^2.7.14",
     "@tarojs/components": "4.0.12",
     "@tarojs/helper": "4.0.12",
@@ -54,13 +55,17 @@
     "@tarojs/runtime": "4.0.12",
     "@tarojs/shared": "4.0.12",
     "@tarojs/taro": "^4.0.12",
+    "@vant/weapp": "^1.11.7",
+    "antd": "^5.25.0",
     "antd-mobile": "^5.39.0",
     "antd-mobile-icons": "^0.3.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "react": "^18.0.0",
     "react-date-range": "^2.0.1",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "taro-ui": "^3.3.0",
+    "vant": "^4.9.19"
   },
   "devDependencies": {
     "@babel/core": "^7.8.0",

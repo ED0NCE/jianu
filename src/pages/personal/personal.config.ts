@@ -1,5 +1,5 @@
 export default {
-  navigationBarTitleText: '个人中心',
+  navigationBarTitleText: '简游-个人中心',
   enablePullDownRefresh: true,
   backgroundTextStyle: 'dark'
 } 
