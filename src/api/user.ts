@@ -27,3 +27,25 @@ export const saveTravelogue = (data: {
 export const deleteTravelogue = (travelId: number) => {
   return http.delete(`/travelogue/${travelId}`);
 };
+
+// 获取用户信息
+export const getUserInfo = () => {
+  return http.get('/user/info');
+};
+
+// 更新用户信息(换头像/编辑资料)
+export const updateUserInfo = (data: {
+  nickname?: string;
+  avatar?: string;
+  gender?: string;
+  signature?: string;
+  birthday?: string;
+  location?: string;
+  password?: string;
+}) => http.post('/user/update', data, { loading: true });
+
+
+
+
+
+

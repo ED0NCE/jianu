@@ -5,8 +5,8 @@ import { useUserStore } from '../store/userStore'
 const authRequiredPages = [
   '/pages/personal/personal',
   '/pages/editInfo/editInfo',
-  '/pages/messages/messages',
   '/pages/edit/edit',
+  '/pages/messages/messages'
 ]
 
 /**
