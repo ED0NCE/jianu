@@ -15,26 +15,29 @@ interface Post {
   likes: number;
   desc: string;
   img: string[];
-  status: 'passed' | 'pending' | 'rejected';
+  status: number;  // 修改为number: 0草稿 1待审核 2已过审 3已拒绝 4已删除
 }
 
 const statusMap = {
   all: '全部游记',
-  pending: '待审核',
-  passed: '已通过',
-  rejected: '已拒绝',
+  0: '草稿',
+  1: '待审核',
+  2: '已过审',
+  3: '已拒绝',
+  4: '已删除'
 };
 
 const Admin: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [stats, setStats] = useState({ passed: 0, pending: 0, rejected: 0 });
-  const [statusFilter, setStatusFilter] = useState<'all'|'pending'|'passed'|'rejected'>('all');
+  const [stats, setStats] = useState({ 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 });
+  const [statusFilter, setStatusFilter] = useState<'all'|0|1|2|3|4>('all');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'latest'|'hot'>('latest');
   const [selected, setSelected] = useState<string[]>([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentPost, setCurrentPost] = useState<Post | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState<Record<string, number>>({});
+  const [reviewReason, setReviewReason] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -56,7 +59,7 @@ const Admin: React.FC = () => {
           'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800&auto=format&fit=crop'
         ],
-        status: 'passed',
+        status: 2,
       },
       {
         id: '2',
@@ -71,7 +74,7 @@ const Admin: React.FC = () => {
           'https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1558032040-b55d2adb9745?w=800&auto=format&fit=crop'
         ],
-        status: 'pending',
+        status: 1,
       },
       {
         id: '3',
@@ -86,7 +89,7 @@ const Admin: React.FC = () => {
           'https://images.unsplash.com/photo-1461501363336-d3f121d11c76?w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1461503927419-4e8ced26c981?w=800&auto=format&fit=crop'
         ],
-        status: 'pending',
+        status: 1,
       },
       {
         id: '4',
@@ -101,7 +104,7 @@ const Admin: React.FC = () => {
           'https://images.unsplash.com/photo-1576675784201-0e142b423952?w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1576675784432-994941412b3d?w=800&auto=format&fit=crop'
         ],
-        status: 'passed',
+        status: 2,
       },
       {
         id: '5',
@@ -116,7 +119,7 @@ const Admin: React.FC = () => {
           'https://images.unsplash.com/photo-1496275068113-fff8c90750d1?w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800&auto=format&fit=crop'
         ],
-        status: 'rejected',
+        status: 3,
       },
       {
         id: '6',
@@ -131,14 +134,16 @@ const Admin: React.FC = () => {
           'https://images.unsplash.com/photo-1520942702018-0862200e6873?w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1534350752840-1b1b71b4b4fe?w=800&auto=format&fit=crop'
         ],
-        status: 'passed',
+        status: 2,
       },
     ];
     setPosts(mockPosts);
     setStats({
-      passed: mockPosts.filter(p => p.status === 'passed').length,
-      pending: mockPosts.filter(p => p.status === 'pending').length,
-      rejected: mockPosts.filter(p => p.status === 'rejected').length,
+      0: mockPosts.filter(p => p.status === 0).length,
+      1: mockPosts.filter(p => p.status === 1).length,
+      2: mockPosts.filter(p => p.status === 2).length,
+      3: mockPosts.filter(p => p.status === 3).length,
+      4: mockPosts.filter(p => p.status === 4).length,
     });
   };
 
@@ -168,16 +173,17 @@ const Admin: React.FC = () => {
   const handleViewDetail = (post: Post) => {
     setCurrentPost(post);
     setShowReviewModal(true);
+    setReviewReason('');
   };
 
   // 审核游记
-  const handleReview = async (status: 'passed' | 'rejected') => {
+  const handleReview = async (status: number) => {
     if (!currentPost) return;
     
     try {
       await travelogueApi.review(Number(currentPost.id), {
         status,
-        reason: null
+        reason: reviewReason || null
       });
       setShowReviewModal(false);
       fetchData();
@@ -196,7 +202,11 @@ const Admin: React.FC = () => {
         content: '确定要删除这篇游记吗？',
         success: async (res) => {
           if (res.confirm) {
-            await travelogueApi.delete(Number(id));
+            // 这里修改为设置status为4（已删除）
+            await travelogueApi.review(Number(id), {
+              status: 4,
+              reason: null
+            });
             fetchData();
             Taro.showToast({ title: '删除成功', icon: 'success' });
           }
@@ -219,6 +229,44 @@ const Admin: React.FC = () => {
     }));
   };
 
+  // 滑动到指定图片
+  const scrollToImage = (postId: string, index: number, event: any) => {
+    const scrollContainer = event.currentTarget.parentElement.previousSibling;
+    const itemWidth = scrollContainer.children[0].offsetWidth + 16; // 16px 是 gap
+    scrollContainer.scrollTo({
+      left: index * itemWidth,
+      behavior: 'smooth'
+    });
+    setActiveImageIndex(prev => ({
+      ...prev,
+      [postId]: index
+    }));
+  };
+
+  // 获取状态文字
+  const getStatusText = (status: number) => {
+    switch (status) {
+      case 0: return '草稿';
+      case 1: return '待审核';
+      case 2: return '已过审';
+      case 3: return '已拒绝';
+      case 4: return '已删除';
+      default: return '未知';
+    }
+  };
+
+  // 获取状态类名
+  const getStatusClass = (status: number) => {
+    switch (status) {
+      case 0: return 'draft';
+      case 1: return 'pending';
+      case 2: return 'passed';
+      case 3: return 'rejected';
+      case 4: return 'deleted';
+      default: return '';
+    }
+  };
+
   return (
     <div className="admin-page">
       {/* 顶部栏 */}
@@ -232,10 +280,12 @@ const Admin: React.FC = () => {
           <Button className="search-btn" onClick={() => {}}>搜索</Button>
         </div>
         <div className="admin-actions">
+          {/* 
           <select className="sort-select" value={sort} onChange={e => setSort(e.target.value as any)}>
             <option value="latest">最新发布</option>
             <option value="hot">最热</option>
           </select>
+          */}
           <Button className="logout-btn" onClick={() => Taro.redirectTo({ url: '/pages/admin/adminlogin' })}>退出登录</Button>
         </div>
       </div>
@@ -246,9 +296,11 @@ const Admin: React.FC = () => {
             <div className="card-title">审核状态</div>
             <Radio.Group value={statusFilter} onChange={val => setStatusFilter(val as any)}>
               <Radio value="all">全部游记 ({total})</Radio>
-              <Radio value="pending">待审核 ({stats.pending})</Radio>
-              <Radio value="passed">已通过 ({stats.passed})</Radio>
-              <Radio value="rejected">已拒绝 ({stats.rejected})</Radio>
+              <Radio value={1}>待审核 ({stats[1]})</Radio>
+              <Radio value={2}>已过审 ({stats[2]})</Radio>
+              <Radio value={3}>已拒绝 ({stats[3]})</Radio>
+              <Radio value={0}>草稿 ({stats[0]})</Radio>
+              <Radio value={4}>已删除 ({stats[4]})</Radio>
             </Radio.Group>
           </div>
           <div className="card chart-card">
@@ -256,12 +308,12 @@ const Admin: React.FC = () => {
             {/* 简单SVG环形图 */}
             <svg width="100%" height="120" viewBox="0 0 120 120">
               <circle cx="60" cy="60" r="48" stroke="#eee" strokeWidth="16" fill="none" />
-              <circle cx="60" cy="60" r="48" stroke="#4caf50" strokeWidth="16" fill="none" strokeDasharray={`${(stats.passed/total)*301.6||0} 301.6`} strokeDashoffset="0" />
-              <circle cx="60" cy="60" r="48" stroke="#ff9800" strokeWidth="16" fill="none" strokeDasharray={`${(stats.pending/total)*301.6||0} 301.6`} strokeDashoffset={`-${(stats.passed/total)*301.6||0}`} />
-              <circle cx="60" cy="60" r="48" stroke="#f44336" strokeWidth="16" fill="none" strokeDasharray={`${(stats.rejected/total)*301.6||0} 301.6`} strokeDashoffset={`-${((stats.passed+stats.pending)/total)*301.6||0}`} />
+              <circle cx="60" cy="60" r="48" stroke="#4caf50" strokeWidth="16" fill="none" strokeDasharray={`${(stats[2]/total)*301.6||0} 301.6`} strokeDashoffset="0" />
+              <circle cx="60" cy="60" r="48" stroke="#ff9800" strokeWidth="16" fill="none" strokeDasharray={`${(stats[1]/total)*301.6||0} 301.6`} strokeDashoffset={`-${(stats[2]/total)*301.6||0}`} />
+              <circle cx="60" cy="60" r="48" stroke="#f44336" strokeWidth="16" fill="none" strokeDasharray={`${(stats[3]/total)*301.6||0} 301.6`} strokeDashoffset={`-${((stats[2]+stats[1])/total)*301.6||0}`} />
             </svg>
             <div className="chart-legend">
-              <span className="passed"></span>已通过
+              <span className="passed"></span>已过审
               <span className="pending"></span>待审核
               <span className="rejected"></span>已拒绝
             </div>
@@ -280,15 +332,15 @@ const Admin: React.FC = () => {
           <div className="result-title">搜索结果：共 {filteredPosts.length} 篇游记</div>
           <div className="travel-list">
             {filteredPosts.map(post => (
-              <div className={`travel-card ${post.status}`} key={post.id}>
+              <div className={`travel-card ${getStatusClass(post.status)}`} key={post.id}>
                 <div className="card-header">
                   <div className="header-left">
                     <span className="travel-title">{post.title}</span>
                     <span className="travel-meta">{post.author} {post.date} 14:30</span>
                   </div>
                   <div className="header-status">
-                    <span className={`status ${post.status}`}>
-                      {post.status === 'passed' ? '已通过' : post.status === 'pending' ? '待审核' : '已拒绝'}
+                    <span className={`status ${getStatusClass(post.status)}`}>
+                      {getStatusText(post.status)}
                     </span>
                   </div>
                 </div>
@@ -307,7 +359,8 @@ const Admin: React.FC = () => {
                       {post.img.map((_, index) => (
                         <span 
                           key={index} 
-                          className={`dot ${index === (activeImageIndex[post.id] || 0) ? 'active' : ''}`} 
+                          className={`dot ${index === (activeImageIndex[post.id] || 0) ? 'active' : ''}`}
+                          onClick={(e) => scrollToImage(post.id, index, e)}
                         />
                       ))}
                     </div>
@@ -316,8 +369,8 @@ const Admin: React.FC = () => {
                 <div className="card-footer">
                   <span className="view-detail" onClick={() => handleViewDetail(post)}>查看详情</span>
                   <div className="card-actions">
-                    {post.status === 'pending' && (
-                      <Button type="primary" fill="outline" size="small" style={{ minWidth: '5vw' }} className="review-btn" onClick={() => handleViewDetail(post)}>审核</Button>
+                    {post.status === 1 && (
+                      <Button type="primary" size="small" style={{ minWidth: '5vw' }} className="review-btn" onClick={() => handleViewDetail(post)}>审核</Button>
                     )}
                     <Button type="danger" size="small" style={{ minWidth: '5vw' }} className="delete-btn" onClick={() => handleDelete(post.id)}>删除</Button>
                   </div>
@@ -338,19 +391,19 @@ const Admin: React.FC = () => {
             </div>
             <div className="modal-body">
               <div className="info-item">
-                <div className="label">标题</div>
+                <div className="modal-label">标题</div>
                 <div className="value">{currentPost.title}</div>
               </div>
               <div className="info-item">
-                <div className="label">作者</div>
+                <div className="modal-label">作者</div>
                 <div className="value">{currentPost.author}</div>
               </div>
               <div className="info-item">
-                <div className="label">发布时间</div>
+                <div className="modal-label">发布时间</div>
                 <div className="value">{currentPost.date} 14:30</div>
               </div>
               <div className="info-item">
-                <div className="label">内容</div>
+                <div className="modal-label">内容</div>
                 <div className="content">{currentPost.desc}</div>
               </div>
               <div className="images">
@@ -367,31 +420,34 @@ const Admin: React.FC = () => {
                     {currentPost.img.map((_, index) => (
                       <span 
                         key={index} 
-                        className={`dot ${index === (activeImageIndex[currentPost.id] || 0) ? 'active' : ''}`} 
+                        className={`dot ${index === (activeImageIndex[currentPost.id] || 0) ? 'active' : ''}`}
+                        onClick={(e) => scrollToImage(currentPost.id, index, e)}
                       />
                     ))}
                   </div>
                 )}
               </div>
               {/* 分割线 */}
-              {currentPost.status === 'pending' && (
+              {currentPost.status === 1 && (
                 <>
                   <hr style={{ margin: '1vh 0 0.5vh 0', border: 'none', borderTop: '1px solid #eee' }} />
-                  <div className="review-reason-title">审核意见</div>
+                  <div className="modal-label review-reason-title">审核意见</div>
                   <TextArea
                     className="review-reason"
                     placeholder="请输入审核意见（可选）"
                     autoSize
+                    value={reviewReason}
+                    onChange={(val) => setReviewReason(val)}
                     style={{ marginTop: '0.5vh', marginBottom: '2vh' }}
                   />
                 </>
               )}
             </div>
-            {currentPost.status === 'pending' && (
+            {currentPost.status === 1 && (
               <div className="modal-footer">
-                <Button type="default" color="#4caf50" fill="solid" size="small" style={{ minWidth: '6vw' }} className="pass-btn" onClick={() => handleReview('passed')}>通过</Button>
-                <Button type="danger" fill="solid" size="small" style={{ minWidth: '6vw' }} className="reject-btn" onClick={() => handleReview('rejected')}>拒绝</Button>
-                <Button type="default" fill="outline" size="small" style={{ minWidth: '6vw' }} className="cancel-btn" onClick={() => setShowReviewModal(false)}>取消</Button>
+                <Button type="primary" color="#4caf50" size="small" style={{ minWidth: '6vw' }} className="pass-btn" onClick={() => handleReview(2)}>通过</Button>
+                <Button type="danger" size="small" style={{ minWidth: '6vw' }} className="reject-btn" onClick={() => handleReview(3)}>拒绝</Button>
+                <Button type="default" size="small" style={{ minWidth: '6vw' }} className="cancel-btn" onClick={() => setShowReviewModal(false)}>取消</Button>
               </div>
             )}
           </div>

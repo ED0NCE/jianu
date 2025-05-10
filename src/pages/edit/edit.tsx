@@ -47,7 +47,7 @@ const Edit: React.FC = () => {
 
   const [showDateValue, setShowDateValue] = useState(false);
 
-  // 点击页面其他地方关闭日期选择器
+  //关闭日期选择器
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -92,7 +92,6 @@ const Edit: React.FC = () => {
 
     try {
       setUploading(true);
-      // 检查文件类型
       const isVideo = file.type.startsWith('video/');
       const uploadFunction = isVideo ? uploadVideo : uploadImage;
       const res = await uploadFunction(file) as any;
@@ -133,16 +132,13 @@ const Edit: React.FC = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 创建本地文件URL
     const fileUrl = URL.createObjectURL(file);
     
-    // 更新封面图
     setFormData(prev => ({
       ...prev,
       video_poster: fileUrl
     }));
 
-    // 重置input，这样同一个文件可以重复选择
     const input = document.getElementById('poster-upload') as HTMLInputElement;
     if (input) {
       input.value = '';
@@ -184,7 +180,6 @@ const Edit: React.FC = () => {
       return;
     }
 
-    // 验证媒体
     if (!formData.video_url && formData.images.length === 0) {
       Taro.showToast({ title: '请至少上传一张图片或一个视频', icon: 'none' });
       return;
@@ -367,9 +362,7 @@ const Edit: React.FC = () => {
 
   // 返回
   const handleBack = () => {
-    Taro.switchTab({
-      url: '/pages/index/index'
-    });
+    Taro.navigateBack();
   };
 
   if (loading) {

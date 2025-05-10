@@ -16,54 +16,54 @@
     align-items: center;
     justify-content: space-between;
     background: #fff;
-    padding: 0.8vh 2vw;
+    padding: 0.7vh 1.8vw;
     border-radius: 0vw;
     margin: 0 0vw 0 0vw;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     .admin-title { 
-      font-size: 1.8vw !important; 
+      font-size: 1.7vw !important; 
       font-weight: bold;
       margin: 0;
     }
-    .admin-search { display: flex; gap: 0.5vw; }
-    .search-input { width: 16vw; height: 4vh; font-size: 1vw; }
-    .search-btn { height: 4vh; font-size: 1vw; }
-    .admin-actions { display: flex; gap: 1vw; align-items: center; }
-    .sort-select { height: 4vh; font-size: 1vw; }
-    .logout-btn { background: #1976d2; color: #fff; font-size: 1vw; height: 4vh; }
+    .admin-search { display: flex; gap: 0.4vw; }
+    .search-input { width: 16vw; height: 3.8vh; font-size: 0.9vw; }
+    .search-btn { height: 3.8vh; font-size: 0.9vw; }
+    .admin-actions { display: flex; gap: 0.8vw; align-items: center; }
+    .sort-select { height: 3.8vh; font-size: 0.9vw; }
+    .logout-btn { background: #1976d2; color: #fff; font-size: 0.9vw; height: 3.8vh; }
   }
   .admin-main {
     display: flex;
-    margin: 1vh 1vw;
-    gap: 2vw;
+    margin: 0.8vh 0.8vw;
+    gap: 1.6vw;
     min-height: 80vh;
   }
   .admin-sidebar {
-    width: 18vw;
+    width: 17vw;
     display: flex;
     flex-direction: column;
-    gap: 1vh;
+    gap: 0.8vh;
     position: sticky;
     top: 0vh;
     align-self: flex-start;
   }
   .card {
     background: #fff;
-    border-radius: 0.8vw;
-    padding: 2vh 1.5vw;
+    border-radius: 0.6vw;
+    padding: 1.8vh 1.2vw;
     margin-bottom: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
-  .card-title { font-weight: bold; margin-bottom: 1vh; font-size: 1.2vw; }
+  .card-title { font-weight: bold; margin-bottom: 0.8vh; font-size: 1.1vw; }
   .chart-placeholder {
     height: 16vh;
     background: #ffffff;
     border-radius: 50%;
-    margin-bottom: 1vh;
+    margin-bottom: 0.8vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1vw;
+    font-size: 0.9vw;
   }
   .chart-legend span { 
     display: inline-block; 
@@ -76,34 +76,36 @@
   .chart-legend .passed { background: #4caf50; }
   .chart-legend .pending { background: #ff9800; }
   .chart-legend .rejected { background: #f44336; }
-  .export-btn { background: #1976d2; color: #fff; margin-bottom: 1vh; font-size: 1vw; }
-  .batch-pass-btn { background: #4caf50; color: #fff; margin-bottom: 1vh; font-size: 1vw; }
-  .batch-reject-btn { background: #f44336; color: #fff; font-size: 1vw; }
+  .export-btn { background: #1976d2; color: #fff; margin-bottom: 0.8vh; font-size: 0.9vw; }
+  .batch-pass-btn { background: #4caf50; color: #fff; margin-bottom: 0.8vh; font-size: 0.9vw; }
+  .batch-reject-btn { background: #f44336; color: #fff; font-size: 0.9vw; }
   .admin-content { flex: 1; min-width: 0; }
-  .result-title { font-weight: bold; margin-bottom: 2vh; font-size: 1.2vw; }
+  .result-title { font-weight: bold; margin-bottom: 1.5vh; font-size: 1.1vw; }
   .travel-list { 
     display: flex; 
     flex-direction: column; 
-    gap: 1vh; 
+    gap: 0.8vh; 
   }
   .travel-card {
     background: #fff;
-    border-radius: 0.8vw;
-    padding: 1.2vh 1.5vw 2vh 1.5vw;
-    margin-bottom: 1vh;
+    border-radius: 0.6vw;
+    padding: 1vh 1.2vw 1.5vh 1.2vw;
+    margin-bottom: 0.8vh;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     position: relative;
 
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 1vw;
-      margin-bottom: 0.5vh;
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+    margin-bottom: 0.4vh;
+    justify-content: space-between;
 
       .header-left {
         display: flex;
-        align-items: center;
-        gap: 1vw;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2vh;
       }
       .header-status {
         margin-left: auto;
@@ -112,53 +114,54 @@
       }
 
       .travel-title {
-        font-size: 1.4vw;
+        font-size: 1.2vw;
         font-weight: bold;
-        margin: 0.2vh 0;
+        margin: 0.1vh 0;
       }
     }
 
     .travel-meta {
       color: #666;
-      font-size: 0.9vw;
+      font-size: 0.8vw;
       margin-bottom: 0;
-      margin-left: 0.5vw;
     }
 
     .status {
-      padding: 0.3vh 0.8vw;
-      border-radius: 0.4vw;
-      font-size: 0.9vw;
+      padding: 0.2vh 0.6vw;
+      border-radius: 0.3vw;
+      font-size: 0.8vw;
       &.passed { background: #e8f5e9; color: #2e7d32; }
       &.pending { background: #fff3e0; color: #ef6c00; }
       &.rejected { background: #ffebee; color: #c62828; }
+      &.draft { background: #f5f5f5; color: #616161; }
+      &.deleted { background: #f0f0f0; color: #9e9e9e; }
     }
 
     .card-desc {
       color: #666;
-      font-size: 1vw;
-      margin-top: 0.5vh;
-      margin-bottom: 1vh;
-      line-height: 1.5;
+      font-size: 0.9vw;
+      margin-top: 0.4vh;
+      margin-bottom: 0.8vh;
+      line-height: 1.4;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-height: 4.5em; // 3行 * 1.5行高
+      max-height: 3.8em; // 3行 * 1.4行高
     }
 
     .card-img {
       width: 100%;
-      height: 20vh;
-      margin-bottom: 1vh;
+      height: 18vh;
+      margin-bottom: 0.8vh;
       position: relative;
       overflow: hidden;
       padding-left: 0;
 
       .img-scroll {
         display: flex;
-        gap: 1vw;
+        gap: 0.8vw;
         height: 100%;
         overflow-x: auto;
         padding: 0;
@@ -176,8 +179,13 @@
           height: 100%;
           width: auto;
           object-fit: cover;
-          border-radius: 0.4vw;
+          border-radius: 0.3vw;
           scroll-snap-align: start;
+          transition: transform 0.2s;
+          
+          &:hover {
+            transform: scale(1.01);
+          }
         }
       }
 
@@ -187,11 +195,11 @@
         left: 50%;
         transform: translateX(-50%);
         display: flex;
-        gap: 0.4vw;
-        padding: 0.4vh 0.8vw;
+        gap: 0.3vw;
+        padding: 0.3vh 0.6vw;
         background: rgba(0, 0, 0, 0.3);
-        border-radius: 1vw;
-        opacity: 0;
+        border-radius: 0.8vw;
+        opacity: 1;
         transition: opacity 0.3s;
 
         .dot {
@@ -199,15 +207,19 @@
           height: 0.4vw;
           border-radius: 50%;
           background: rgba(255, 255, 255, 0.5);
+          cursor: pointer;
+          transition: transform 0.2s, background 0.2s;
+          
+          &:hover {
+            transform: scale(1.2);
+            background: rgba(255, 255, 255, 0.8);
+          }
 
           &.active {
             background: #fff;
+            transform: scale(1.2);
           }
         }
-      }
-
-      &:hover .scroll-indicator {
-        opacity: 1;
       }
     }
 
@@ -215,10 +227,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-top: 0.5vh;
 
       .view-detail {
         color: #1976d2;
-        font-size: 0.9vw;
+        font-size: 0.8vw;
         cursor: pointer;
         text-decoration: none;
 
@@ -227,23 +240,23 @@
         }
       }
 
-      .card-actions {
-        display: flex;
-        gap: 0.8vw;
+  .card-actions {
+    display: flex;
+        gap: 0.6vw;
 
         button {
           min-width: 5vw;
-          height: 2.8vh;
-          padding: 0 1.2vw;
-          font-size: 0.9vw;
-          border-radius: 0.4vw;
+          height: 2.6vh;
+          padding: 0 1vw;
+          font-size: 0.8vw;
+          border-radius: 0.3vw;
           border: none;
           cursor: pointer;
           transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.4vw;
+          gap: 0.3vw;
           font-weight: 500;
           position: relative;
           overflow: hidden;
@@ -292,8 +305,8 @@
           &::after {
             content: '';
             display: inline-block;
-            width: 1vw;
-            height: 1vw;
+            width: 0.9vw;
+            height: 0.9vw;
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -316,7 +329,7 @@
 .status-card {
   :global {
     .nut-radio {
-      margin-bottom: 1vh;
+      margin-bottom: 0.6vh;
     }
     .nut-radio:last-child {
       margin-bottom: 0;
@@ -324,14 +337,14 @@
     .nut-radio-group {
       display: flex;
       flex-direction: column;
-      gap: 0.8vh;
+      gap: 0.5vh;
       width: 100%;
     }
 
     .nut-radio {
       font-size: 0.75rem;
-      padding: 0.6vh 0.8vw;
-      border-radius: 0.4vw;
+      padding: 0.5vh 0.6vw;
+      border-radius: 0.3vw;
       transition: all 0.2s ease;
       border: 1px solid transparent;
       margin: 0;
@@ -375,15 +388,15 @@
   position: relative;
 }
 .admin-search .search-input {
-  padding-left: 2.2vw;
+  padding-left: 2vw;
 }
 .admin-search .search-icon {
   position: absolute;
-  left: 0.6vw;
+  left: 0.5vw;
   top: 50%;
   transform: translateY(-50%);
-  width: 1.2vw;
-  height: 1.2vw;
+  width: 1vw;
+  height: 1vw;
   color: #888;
   pointer-events: none;
 }
@@ -403,27 +416,27 @@
 
   .modal-content {
     background: #fff;
-    border-radius: 0.8vw;
-    width: 60vw;
+    border-radius: 0.6vw;
+    width: 55vw;
     max-height: 80vh;
     overflow-y: auto;
-    padding: 2vh 2vw;
+    padding: 1.8vh 1.8vw;
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2vh;
-      padding-bottom: 1vh;
+      margin-bottom: 1.5vh;
+      padding-bottom: 0.8vh;
       border-bottom: 1px solid #eee;
 
       .title {
-        font-size: 1.4vw;
+        font-size: 1.3vw;
         font-weight: bold;
       }
 
       .close-btn {
-        font-size: 1.2vw;
+        font-size: 1.1vw;
         color: #666;
         cursor: pointer;
         &:hover { color: #333; }
@@ -432,11 +445,11 @@
 
     .modal-body {
       .info-item {
-        margin-bottom: 1vh;
+        margin-bottom: 0.8vh;
         
         .label {
           font-weight: bold;
-          margin-bottom: 0.5vh;
+          margin-bottom: 0.3vh;
         }
 
         .value {
@@ -445,7 +458,7 @@
       }
 
       .content {
-        margin: 2vh 0;
+        margin: 1.5vh 0;
         line-height: 1.6;
         white-space: pre-wrap;
       }
@@ -453,13 +466,13 @@
       .images {
         width: 100%;
         height: 30vh;
-        margin: 2vh 0;
+        margin: 1.5vh 0;
         position: relative;
         overflow: hidden;
 
         .img-scroll {
           display: flex;
-          gap: 1vw;
+          gap: 0.8vw;
           height: 100%;
           overflow-x: auto;
           padding: 0 0.5vw;
@@ -477,8 +490,13 @@
             height: 100%;
             width: auto;
             object-fit: cover;
-            border-radius: 0.4vw;
+            border-radius: 0.3vw;
             scroll-snap-align: start;
+            transition: transform 0.2s;
+            
+            &:hover {
+              transform: scale(1.01);
+            }
           }
         }
 
@@ -488,11 +506,11 @@
           left: 50%;
           transform: translateX(-50%);
           display: flex;
-          gap: 0.4vw;
-          padding: 0.4vh 0.8vw;
+          gap: 0.3vw;
+          padding: 0.3vh 0.6vw;
           background: rgba(0, 0, 0, 0.3);
-          border-radius: 1vw;
-          opacity: 0;
+          border-radius: 0.8vw;
+          opacity: 1;
           transition: opacity 0.3s;
 
           .dot {
@@ -500,15 +518,19 @@
             height: 0.4vw;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            
+            &:hover {
+              transform: scale(1.2);
+              background: rgba(255, 255, 255, 0.8);
+            }
 
             &.active {
               background: #fff;
+              transform: scale(1.2);
             }
           }
-        }
-
-        &:hover .scroll-indicator {
-          opacity: 1;
         }
       }
     }
@@ -516,24 +538,24 @@
     .modal-footer {
       display: flex;
       justify-content: flex-end;
-      gap: 1vw;
-      margin-top: 2vh;
-      padding-top: 1vh;
+      gap: 0.8vw;
+      margin-top: 1.5vh;
+      padding-top: 0.8vh;
       border-top: 1px solid #eee;
 
       button {
         min-width: 6vw;
-        height: 3.2vh;
-        padding: 0 1.5vw;
-        font-size: 1vw;
-        border-radius: 0.4vw;
+        height: 3vh;
+        padding: 0 1.2vw;
+        font-size: 0.9vw;
+        border-radius: 0.3vw;
         border: none;
         cursor: pointer;
         transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.4vw;
+        gap: 0.3vw;
         font-weight: 500;
         position: relative;
         overflow: hidden;
@@ -594,8 +616,8 @@
         &::after {
           content: '';
           display: inline-block;
-          width: 1.2vw;
-          height: 1.2vw;
+          width: 1vw;
+          height: 1vw;
           background-size: contain;
           background-repeat: no-repeat;
           background-position: center;
@@ -618,17 +640,41 @@
   }
 }
 
-.review-reason .nut-textarea__textarea {
-  border-bottom: none !important;
-  box-shadow: none !important;
+.review-reason {
+  .nut-textarea {
+    border: 1px solid #e0e0e0;
+    border-radius: 0.3vw;
+    padding: 0.5vh;
+    
+    &:focus-within {
+      border-color: #1976d2;
+    }
+  }
   
+  .nut-textarea__textarea {
+    border-bottom: none !important;
+    box-shadow: none !important;
+    font-size: 0.9vw;
+    min-height: 4vh;
+  }
 }
 
 .review-reason-title {
-  font-size: 0.5rem;
+  font-size: 1vw;
   font-weight: bold;
   color: #333;
   margin-bottom: 0.5vh;
   margin-left: 0;
   margin-top: 0.2vh;
+}
+
+.modal-header .title {
+  font-size: 1.3vw;
+  font-weight: bold;
+}
+.modal-label {
+  font-size: 0.9vw;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0.4vh;
 } 
