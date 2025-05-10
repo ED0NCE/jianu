@@ -5,7 +5,7 @@ export const adminLogin = (data: {
   username: string;
   password: string;
 }) => {
-  return http.post('/admin/login', data);
+  return http.post('/login', data);
 };
 
 export const travelogueApi = {
