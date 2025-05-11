@@ -41,4 +41,9 @@ export const saveTravelogue = (data: object) => {
 export const deleteTravelogue = (travelId: number) => {
   return http.post(`/travelogue/${travelId}`);
 };
+
+// 发布草稿
+export const publishDraft = (travelId: number) => {
+  return http.post(`/travelogue/${travelId}/publish`);
+};
  

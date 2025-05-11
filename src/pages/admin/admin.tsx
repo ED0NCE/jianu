@@ -5,9 +5,11 @@ import { travelogueApi } from '../../api/admin';
 import { Radio, Button, TextArea } from '@nutui/nutui-react';
 import '@nutui/nutui-react/dist/style.css';
 import './admin.scss';
+import { useAdminStore } from '../../store/adminStore';
+import AdminAuthGuard from '../../components/AdminAuthGuard';
 
 interface Post {
-  id: string;
+  travelId: string;
   title: string;
   author: string;
   date: string;
@@ -27,7 +29,8 @@ const statusMap = {
   4: '已删除'
 };
 
-const Admin: React.FC = () => {
+const AdminPage = () => {
+  const { profile, logout } = useAdminStore();
   const [posts, setPosts] = useState<Post[]>([]);
   const [stats, setStats] = useState({ 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 });
   const [statusFilter, setStatusFilter] = useState<'all'|0|1|2|3|4>('all');
@@ -47,7 +50,7 @@ const Admin: React.FC = () => {
     // 模拟数据
     const mockPosts: Post[] = [
       {
-        id: '1',
+        travelId: '1',
         title: '春日京都赏樱之旅',
         author: '林丽丽',
         date: '2023-04-15',
@@ -62,7 +65,7 @@ const Admin: React.FC = () => {
         status: 2,
       },
       {
-        id: '2',
+        travelId: '2',
         title: '云南大理古城深度游',
         author: '张远航',
         date: '2023-05-22',
@@ -77,7 +80,7 @@ const Admin: React.FC = () => {
         status: 1,
       },
       {
-        id: '3',
+        travelId: '3',
         title: '西藏拉萨朝圣之旅',
         author: '王小明',
         date: '2023-06-10',
@@ -92,7 +95,7 @@ const Admin: React.FC = () => {
         status: 1,
       },
       {
-        id: '4',
+        travelId: '4',
         title: '厦门鼓浪屿慢生活',
         author: '李晓霞',
         date: '2023-03-18',
@@ -107,7 +110,7 @@ const Admin: React.FC = () => {
         status: 2,
       },
       {
-        id: '5',
+        travelId: '5',
         title: '新疆伊犁草原自驾游',
         author: '赵天宇',
         date: '2023-07-01',
@@ -122,7 +125,7 @@ const Admin: React.FC = () => {
         status: 3,
       },
       {
-        id: '6',
+        travelId: '6',
         title: '青岛啤酒节狂欢记',
         author: '孙佳',
         date: '2023-08-12',
@@ -147,12 +150,12 @@ const Admin: React.FC = () => {
     });
   };
 
-  const handleApprove = async (id: string) => {
-    await Taro.request({ url: `/mock/admin/posts/${id}/approve`, method: 'POST' });
+  const handleApprove = async (travelId: string) => {
+    await Taro.request({ url: `/mock/admin/posts/${travelId}/approve`, method: 'POST' });
     fetchData();
   };
-  const handleReject = async (id: string) => {
-    await Taro.request({ url: `/mock/admin/posts/${id}/reject`, method: 'POST' });
+  const handleReject = async (travelId: string) => {
+    await Taro.request({ url: `/mock/admin/posts/${travelId}/reject`, method: 'POST' });
     fetchData();
   };
   const handleBatch = async (type: 'approve'|'reject') => {
@@ -177,34 +180,33 @@ const Admin: React.FC = () => {
   };
 
   // 审核游记
-  const handleReview = async (status: number) => {
+  const handleReview = async (option: number) => {
     if (!currentPost) return;
     
     try {
-      await travelogueApi.review(Number(currentPost.id), {
-        status,
+      await travelogueApi.review(Number(currentPost.travelId), {
+        option,
         reason: reviewReason || null
       });
       setShowReviewModal(false);
       fetchData();
-      Taro.showToast({ title: '审核成功', icon: 'success' });
+      Taro.showToast({ title: '操作成功', icon: 'success' });
     } catch (error) {
-      console.error('审核失败:', error);
-      Taro.showToast({ title: '审核失败', icon: 'error' });
+      console.error('操作失败:', error);
+      Taro.showToast({ title: '操作失败', icon: 'error' });
     }
   };
 
   // 删除游记
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (travelId: string) => {
     try {
       await Taro.showModal({
         title: '确认删除',
         content: '确定要删除这篇游记吗？',
         success: async (res) => {
           if (res.confirm) {
-            // 这里修改为设置status为4（已删除）
-            await travelogueApi.review(Number(id), {
-              status: 4,
+            await travelogueApi.review(Number(travelId), {
+              option: 2, // 删除操作
               reason: null
             });
             fetchData();
@@ -219,18 +221,18 @@ const Admin: React.FC = () => {
   };
 
   // 添加滚动处理函数
-  const handleScroll = (postId: string, event: any) => {
+  const handleScroll = (travelId: string, event: any) => {
     const scrollLeft = event.target.scrollLeft;
     const itemWidth = event.target.children[0].offsetWidth + 16; // 16px 是 gap
     const newIndex = Math.round(scrollLeft / itemWidth);
     setActiveImageIndex(prev => ({
       ...prev,
-      [postId]: newIndex
+      [travelId]: newIndex
     }));
   };
 
   // 滑动到指定图片
-  const scrollToImage = (postId: string, index: number, event: any) => {
+  const scrollToImage = (travelId: string, index: number, event: any) => {
     const scrollContainer = event.currentTarget.parentElement.previousSibling;
     const itemWidth = scrollContainer.children[0].offsetWidth + 16; // 16px 是 gap
     scrollContainer.scrollTo({
@@ -239,7 +241,7 @@ const Admin: React.FC = () => {
     });
     setActiveImageIndex(prev => ({
       ...prev,
-      [postId]: index
+      [travelId]: index
     }));
   };
 
@@ -267,119 +269,126 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    Taro.redirectTo({
+      url: '/pages/admin/adminLogin'
+    });
+  };
+
   return (
-    <div className="admin-page">
-      {/* 顶部栏 */}
-      <div className="admin-header">
-        <div className="admin-title">游记审核平台</div>
-        <div className="admin-search">
-          <span className="search-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/><path d="M20 20L17 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </span>
-          <Input className="search-input" value={search} onInput={e => setSearch(e.detail.value)} placeholder="搜索游记或作者..." />
-          <Button className="search-btn" onClick={() => {}}>搜索</Button>
-        </div>
-        <div className="admin-actions">
-          {/* 
-          <select className="sort-select" value={sort} onChange={e => setSort(e.target.value as any)}>
-            <option value="latest">最新发布</option>
-            <option value="hot">最热</option>
-          </select>
-          */}
-          <Button className="logout-btn" onClick={() => Taro.redirectTo({ url: '/pages/admin/adminlogin' })}>退出登录</Button>
-        </div>
-      </div>
-      <div className="admin-main">
-        {/* 左侧栏 */}
-        <div className="admin-sidebar">
-          <div className="card status-card">
-            <div className="card-title">审核状态</div>
-            <Radio.Group value={statusFilter} onChange={val => setStatusFilter(val as any)}>
-              <Radio value="all">全部游记 ({total})</Radio>
-              <Radio value={1}>待审核 ({stats[1]})</Radio>
-              <Radio value={2}>已过审 ({stats[2]})</Radio>
-              <Radio value={3}>已拒绝 ({stats[3]})</Radio>
-              <Radio value={0}>草稿 ({stats[0]})</Radio>
-              <Radio value={4}>已删除 ({stats[4]})</Radio>
-            </Radio.Group>
-          </div>
-          <div className="card chart-card">
-            <div className="card-title">审核统计</div>
-            {/* 简单SVG环形图 */}
-            <svg width="100%" height="120" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="48" stroke="#eee" strokeWidth="16" fill="none" />
-              <circle cx="60" cy="60" r="48" stroke="#4caf50" strokeWidth="16" fill="none" strokeDasharray={`${(stats[2]/total)*301.6||0} 301.6`} strokeDashoffset="0" />
-              <circle cx="60" cy="60" r="48" stroke="#ff9800" strokeWidth="16" fill="none" strokeDasharray={`${(stats[1]/total)*301.6||0} 301.6`} strokeDashoffset={`-${(stats[2]/total)*301.6||0}`} />
-              <circle cx="60" cy="60" r="48" stroke="#f44336" strokeWidth="16" fill="none" strokeDasharray={`${(stats[3]/total)*301.6||0} 301.6`} strokeDashoffset={`-${((stats[2]+stats[1])/total)*301.6||0}`} />
-            </svg>
-            <div className="chart-legend">
-              <span className="passed"></span>已过审
-              <span className="pending"></span>待审核
-              <span className="rejected"></span>已拒绝
-            </div>
-          </div>
-          {/*
-          <div className="card quick-card">
-            <div className="card-title">快捷操作</div>
-            <Button className="export-btn" onClick={()=>Taro.showToast({title:'导出成功',icon:'success'})}>导出审核报表</Button>
-            <Button className="batch-pass-btn" disabled={selected.length===0} onClick={()=>handleBatch('approve')}>批量通过</Button>
-            <Button className="batch-reject-btn" disabled={selected.length===0} onClick={()=>handleBatch('reject')}>批量拒绝</Button>
-          </div>
-          */}
-        </div>
-        {/* 右侧内容区 */}
-        <div className="admin-content">
-          <div className="result-title">搜索结果：共 {filteredPosts.length} 篇游记</div>
-          <div className="travel-list">
-            {filteredPosts.map(post => (
-              <div className={`travel-card ${getStatusClass(post.status)}`} key={post.id}>
-                <div className="card-header">
-                  <div className="header-left">
-                    <span className="travel-title">{post.title}</span>
-                    <span className="travel-meta">{post.author} {post.date} 14:30</span>
-                  </div>
-                  <div className="header-status">
-                    <span className={`status ${getStatusClass(post.status)}`}>
-                      {getStatusText(post.status)}
-                    </span>
-                  </div>
-                </div>
-                <div className="card-desc">{post.desc}</div>
-                <div className="card-img">
-                  <div 
-                    className="img-scroll"
-                    onScroll={(e) => handleScroll(post.id, e)}
-                  >
-                    {post.img.map((imgUrl, index) => (
-                      <img key={index} src={imgUrl} alt={`${post.title}-${index + 1}`} />
-                    ))}
-                  </div>
-                  {post.img.length > 1 && (
-                    <div className="scroll-indicator">
-                      {post.img.map((_, index) => (
-                        <span 
-                          key={index} 
-                          className={`dot ${index === (activeImageIndex[post.id] || 0) ? 'active' : ''}`}
-                          onClick={(e) => scrollToImage(post.id, index, e)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="card-footer">
-                  <span className="view-detail" onClick={() => handleViewDetail(post)}>查看详情</span>
-                  <div className="card-actions">
-                    {post.status === 1 && (
-                      <Button type="primary" size="small" style={{ minWidth: '5vw' }} className="review-btn" onClick={() => handleViewDetail(post)}>审核</Button>
-                    )}
-                    <Button type="danger" size="small" style={{ minWidth: '5vw' }} className="delete-btn" onClick={() => handleDelete(post.id)}>删除</Button>
-                  </div>
+    <AdminAuthGuard>
+      <View className='admin-page'>
+        <View className='admin-header'>
+          <View className='welcome'>
+            欢迎回来，管理员
+          </View>
+          <View className='role'>
+            角色：{profile?.role}
+          </View>
+        </View>
+        
+        <View className='admin-content'>
+          {/* 这里添加管理页面的具体内容 */}
+          <div className="admin-main">
+            {/* 左侧栏 */}
+            <div className="admin-sidebar">
+              <div className="card status-card">
+                <div className="card-title">审核状态</div>
+                <Radio.Group value={statusFilter} onChange={val => setStatusFilter(val as any)}>
+                  <Radio value="all">全部游记 ({total})</Radio>
+                  <Radio value={1}>待审核 ({stats[1]})</Radio>
+                  <Radio value={2}>已过审 ({stats[2]})</Radio>
+                  <Radio value={3}>已拒绝 ({stats[3]})</Radio>
+                  <Radio value={0}>草稿 ({stats[0]})</Radio>
+                  <Radio value={4}>已删除 ({stats[4]})</Radio>
+                </Radio.Group>
+              </div>
+              <div className="card chart-card">
+                <div className="card-title">审核统计</div>
+                {/* 简单SVG环形图 */}
+                <svg width="100%" height="120" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="48" stroke="#eee" strokeWidth="16" fill="none" />
+                  <circle cx="60" cy="60" r="48" stroke="#4caf50" strokeWidth="16" fill="none" strokeDasharray={`${(stats[2]/total)*301.6||0} 301.6`} strokeDashoffset="0" />
+                  <circle cx="60" cy="60" r="48" stroke="#ff9800" strokeWidth="16" fill="none" strokeDasharray={`${(stats[1]/total)*301.6||0} 301.6`} strokeDashoffset={`-${(stats[2]/total)*301.6||0}`} />
+                  <circle cx="60" cy="60" r="48" stroke="#f44336" strokeWidth="16" fill="none" strokeDasharray={`${(stats[3]/total)*301.6||0} 301.6`} strokeDashoffset={`-${((stats[2]+stats[1])/total)*301.6||0}`} />
+                </svg>
+                <div className="chart-legend">
+                  <span className="passed"></span>已过审
+                  <span className="pending"></span>待审核
+                  <span className="rejected"></span>已拒绝
                 </div>
               </div>
-            ))}
+              {/*
+              <div className="card quick-card">
+                <div className="card-title">快捷操作</div>
+                <Button className="export-btn" onClick={()=>Taro.showToast({title:'导出成功',icon:'success'})}>导出审核报表</Button>
+                <Button className="batch-pass-btn" disabled={selected.length===0} onClick={()=>handleBatch('approve')}>批量通过</Button>
+                <Button className="batch-reject-btn" disabled={selected.length===0} onClick={()=>handleBatch('reject')}>批量拒绝</Button>
+              </div>
+              */}
+            </div>
+            {/* 右侧内容区 */}
+            <div className="admin-content">
+              <div className="result-title">搜索结果：共 {filteredPosts.length} 篇游记</div>
+              <div className="travel-list">
+                {filteredPosts.map(post => (
+                  <div className={`travel-card ${getStatusClass(post.status)}`} key={post.travelId}>
+                    <div className="card-header">
+                      <div className="header-left">
+                        <span className="travel-title">{post.title}</span>
+                        <span className="travel-meta">{post.author} {post.date} 14:30</span>
+                      </div>
+                      <div className="header-status">
+                        <span className={`status ${getStatusClass(post.status)}`}>
+                          {getStatusText(post.status)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="card-desc">{post.desc}</div>
+                    <div className="card-img">
+                      <div 
+                        className="img-scroll"
+                        onScroll={(e) => handleScroll(post.travelId, e)}
+                      >
+                        {post.img.map((imgUrl, index) => (
+                          <img key={index} src={imgUrl} alt={`${post.title}-${index + 1}`} />
+                        ))}
+                      </div>
+                      {post.img.length > 1 && (
+                        <div className="scroll-indicator">
+                          {post.img.map((_, index) => (
+                            <span 
+                              key={index} 
+                              className={`dot ${index === (activeImageIndex[post.travelId] || 0) ? 'active' : ''}`}
+                              onClick={(e) => scrollToImage(post.travelId, index, e)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="card-footer">
+                      <span className="view-detail" onClick={() => handleViewDetail(post)}>查看详情</span>
+                      <div className="card-actions">
+                        {post.status === 1 && (
+                          <Button type="primary" size="small" style={{ minWidth: '5vw' }} className="review-btn" onClick={() => handleViewDetail(post)}>审核</Button>
+                        )}
+                        <Button type="danger" size="small" style={{ minWidth: '5vw' }} className="delete-btn" onClick={() => handleDelete(post.travelId)}>删除</Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </View>
+
+        <View className='admin-footer'>
+          <View className='logout-btn' onClick={handleLogout}>
+            退出登录
+          </View>
+        </View>
+      </View>
 
       {/* 审核弹窗 */}
       {showReviewModal && currentPost && (
@@ -409,7 +418,7 @@ const Admin: React.FC = () => {
               <div className="images">
                 <div 
                   className="img-scroll"
-                  onScroll={(e) => handleScroll(currentPost.id, e)}
+                  onScroll={(e) => handleScroll(currentPost.travelId, e)}
                 >
                   {currentPost.img.map((imgUrl, index) => (
                     <img key={index} src={imgUrl} alt={`${currentPost.title}-${index + 1}`} />
@@ -420,8 +429,8 @@ const Admin: React.FC = () => {
                     {currentPost.img.map((_, index) => (
                       <span 
                         key={index} 
-                        className={`dot ${index === (activeImageIndex[currentPost.id] || 0) ? 'active' : ''}`}
-                        onClick={(e) => scrollToImage(currentPost.id, index, e)}
+                        className={`dot ${index === (activeImageIndex[currentPost.travelId] || 0) ? 'active' : ''}`}
+                        onClick={(e) => scrollToImage(currentPost.travelId, index, e)}
                       />
                     ))}
                   </div>
@@ -445,16 +454,16 @@ const Admin: React.FC = () => {
             </div>
             {currentPost.status === 1 && (
               <div className="modal-footer">
-                <Button type="primary" color="#4caf50" size="small" style={{ minWidth: '6vw' }} className="pass-btn" onClick={() => handleReview(2)}>通过</Button>
-                <Button type="danger" size="small" style={{ minWidth: '6vw' }} className="reject-btn" onClick={() => handleReview(3)}>拒绝</Button>
+                <Button type="primary" color="#4caf50" size="small" style={{ minWidth: '6vw' }} className="pass-btn" onClick={() => handleReview(0)}>通过</Button>
+                <Button type="danger" size="small" style={{ minWidth: '6vw' }} className="reject-btn" onClick={() => handleReview(1)}>拒绝</Button>
                 <Button type="default" size="small" style={{ minWidth: '6vw' }} className="cancel-btn" onClick={() => setShowReviewModal(false)}>取消</Button>
               </div>
             )}
           </div>
         </div>
       )}
-    </div>
+    </AdminAuthGuard>
   );
 };
 
-export default Admin; 
+export default AdminPage; 

@@ -5,7 +5,7 @@ export const adminLogin = (data: {
   username: string;
   password: string;
 }) => {
-  return http.post('/login', data);
+  return http.post('/admin/login', data);
 };
 
 export const travelogueApi = {
@@ -25,11 +25,19 @@ export const travelogueApi = {
 //   },
 
   // 审核游记
-  review: (id: number, data: {
-    status: number; // 状态：0-草稿 1-待审核 2-已过审 3-已拒绝 4-已删除
+  review: (travelId: number, data: {
+    option: number; // 操作选项：0-通过 1-拒绝 2-删除
     reason: string | null;
   }) => {
-    return http.post(`/admin/travelogue/${id}/review`, data);
+    const adminId = localStorage.getItem('admin-storage') 
+      ? JSON.parse(localStorage.getItem('admin-storage')!).state.profile?.adminId 
+      : null;
+
+    return http.post(`/admin/travelogue/${travelId}/review`, data, {
+      header: {
+        'X-Admin-Id': adminId
+      }
+    });
   },
 
   // 批量审核

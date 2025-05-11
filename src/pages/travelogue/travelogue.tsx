@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro';
 import './travelogue.scss';
 import dayjs from 'dayjs';
 import { useUserStore } from '../../store/userStore';
-import { getTravelogueDetail, toggleLike, deleteTravelogue } from '../../api/user';
+import { getTravelogueDetail, toggleLike, deleteTravelogue, publishDraft } from '../../api/user';
 
 // 骨架屏
 interface SkeletonScreenProps {
@@ -240,16 +240,16 @@ const Travelogue: React.FC = () => {
     travel_id: 1,
     title: '大理古城与洱海的完美邂逅',
     content: '第一天，我们抵达大理古城，入住了古城内的一家特色客栈。客栈的庭院里种满了多肉植物，环境非常舒适。放下行李后，我们就在古城里闲逛，感受这座千年古城的魅力。\n\n第二天，我们租了电动车环洱海。一路上风景如画，蓝天白云，青山绿水，让人心旷神怡。我们在双廊古镇停留，品尝了当地特色美食。\n\n第三天，我们去了崇圣寺三塔，这是大理的标志性建筑。下午去了喜洲古镇，体验了白族扎染工艺。\n\n第四天，我们去了苍山，乘坐缆车上山，欣赏了壮丽的山景。晚上回到古城，在酒吧街感受夜生活。\n\n最后一天，我们在古城里买了一些特产，然后依依不舍地离开了这座美丽的城市。',
-    status: 1,
+    status: 0,
     created_at: '2024-03-15T10:30:00Z',
     updated_at: '2024-03-15T10:30:00Z',
     location: '云南大理',
     start_date: '2024-03-10T00:00:00Z',
     end_date: '2024-03-15T00:00:00Z',
-    participants: 2,
+    participants: 3,
     expenditure: 3500,
     likes: 1234,
-    rejection_reason: null,
+    rejection_reason: '1111111111111111111111111111111111122222222222222',
     video_url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     video_poster: 'https://images.unsplash.com/photo-1590452224879-867e8012a828?q=80&w=1470&auto=format&fit=crop',
     author: {
@@ -304,12 +304,12 @@ const Travelogue: React.FC = () => {
         }
       } catch (apiError) {
         console.warn('点赞API调用失败，使用本地模拟:', apiError);
-    if (liked) {
-      setLiked(false);
-      setLikeCount(likeCount - 1);
-    } else {
-      setLiked(true);
-      setLikeCount(likeCount + 1);
+        if (liked) {
+          setLiked(false);
+          setLikeCount(likeCount - 1);
+        } else {
+          setLiked(true);
+          setLikeCount(likeCount + 1);
         }
       }
     } catch (error) {
@@ -388,6 +388,28 @@ const Travelogue: React.FC = () => {
     }
   };
 
+  // 发布游记
+  const handlePublish = () => {
+    setShowMenu(false);
+    Taro.showModal({
+      title: '提示',
+      content: '确定要发布游记吗？发布后将进入审核状态',
+      success: res => {
+        if (res.confirm) {
+          publishDraft(travelogueData.travel_id).then(() => {
+            Taro.showToast({ title: '发布成功', icon: 'success' });
+            setTimeout(() => {
+              Taro.redirectTo({ url: '/pages/index/index' });
+            }, 800);
+          }).catch(error => {
+            console.error('发布失败:', error);
+            Taro.showToast({ title: '发布失败', icon: 'error' });
+          });
+        }
+      }
+    });
+  };
+
   // 如果数据还在加载中，显示骨架屏
   if (loading || !travelogueData) {
     return <SkeletonScreen onBack={handleBack} />;
@@ -453,22 +475,38 @@ const Travelogue: React.FC = () => {
         <View className="nav-btn left" onClick={handleBack}>
           <View className="icon nav-back" />
         </View>
-        <View className="nav-title" />
+        <View className="nav-title">
+          {travelogueData.status === 0 && <Text className="draft-tag">草 稿</Text>}
+        </View>
         <View className="nav-btn right" onClick={handleMenu}>
           <View className="icon nav-menu" />
         </View>
       </View>
 
+      {/* 状态提示条 */}
+      {travelogueData.status === 1 && (
+        <View className="status-bar pending">
+          <View className="status-icon" />
+          <Text className="status-text">游记正在审核中，请耐心等待</Text>
+        </View>
+      )}
+      {travelogueData.status === 3 && (
+        <View className="status-bar rejected">
+          <View className="status-icon" />
+          <Text className="status-text">游记未过审，请编辑后重新发布。原因：{travelogueData.rejection_reason}</Text>
+        </View>
+      )}
+
       <View className="travelogue-content-container">
         {/* 轮播图 */}
-      <View className="carousel">
-        <Swiper
-          className="carousel-swiper"
-          circular
-          indicatorDots={false}
-          current={currentImg}
-          onChange={handleSwiperChange}
-        >
+        <View className="carousel">
+          <Swiper
+            className="carousel-swiper"
+            circular
+            indicatorDots={false}
+            current={currentImg}
+            onChange={handleSwiperChange}
+          >
             {travelogueData?.video_url && travelogueData.video_poster && (
               <SwiperItem key="video">
                 <View 
@@ -490,21 +528,21 @@ const Travelogue: React.FC = () => {
                 </View>
               </SwiperItem>
             )}
-          {images.map((img, idx) => (
+            {images.map((img, idx) => (
               <SwiperItem key={img.image_id}>
-              <Image
-                className="carousel-img"
+                <Image
+                  className="carousel-img"
                   src={img.image_url}
-                mode="aspectFill"
-                onClick={() => handlePreview(idx)}
-              />
-            </SwiperItem>
-          ))}
-        </Swiper>
-        <View className="carousel-indicator">
+                  mode="aspectFill"
+                  onClick={() => handlePreview(idx)}
+                />
+              </SwiperItem>
+            ))}
+          </Swiper>
+          <View className="carousel-indicator">
             <Text>{currentImg + 1}/{travelogueData.video_url ? images.length + 1 : images.length}</Text>
-        </View>
-        <View className="carousel-dots">
+          </View>
+          <View className="carousel-dots">
             {travelogueData.video_url && (
               <View
                 key="video-dot"
@@ -512,57 +550,59 @@ const Travelogue: React.FC = () => {
                 onClick={() => setCurrentImg(0)}
               />
             )}
-          {images.map((_, idx) => (
-            <View
-              key={idx}
+            {images.map((_, idx) => (
+              <View
+                key={idx}
                 className={`dot${idx === (travelogueData.video_url ? currentImg - 1 : currentImg) ? ' active' : ''}`}
                 onClick={() => setCurrentImg(travelogueData.video_url ? idx + 1 : idx)}
-            />
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* 数据卡片 */}
+        <View className="info-card">
+          <View className="info-item">
+            <View className="icon location" />
+            <Text>{location}</Text>
+          </View>
+          <View className="info-item">
+            <View className="icon days" />
+            <Text>{days}天</Text>
+          </View>
+          <View className="info-item">
+            <View className="icon people" />
+            <Text>{participants}人</Text>
+          </View>
+          <View className="info-item">
+            <View className="icon budget" />
+            <Text>约{budget}k</Text>
+          </View>
+        </View>
+
+        {/* 标题和正文 */}
+        <View className="travelogue-title">{title}</View>
+        <View className="travelogue-content">
+          {content.split('\n\n').map((p, i) => (
+            <Text className="paragraph" key={i}>{p}</Text>
           ))}
         </View>
       </View>
 
-        {/* 数据卡片 */}
-      <View className="info-card">
-        <View className="info-item">
-          <View className="icon location" />
-          <Text>{location}</Text>
-        </View>
-        <View className="info-item">
-          <View className="icon days" />
-          <Text>{days}天</Text>
-        </View>
-        <View className="info-item">
-          <View className="icon people" />
-            <Text>{participants}人</Text>
-        </View>
-        <View className="info-item">
-          <View className="icon budget" />
-          <Text>约{budget}k</Text>
-        </View>
-      </View>
-
-        {/* 标题和正文 */}
-      <View className="travelogue-title">{title}</View>
-      <View className="travelogue-content">
-          {content.split('\n\n').map((p, i) => (
-          <Text className="paragraph" key={i}>{p}</Text>
-        ))}
-        </View>
-      </View>
-
       {/* 底部栏 */}
-      <View className="travelogue-footer">
-        <Image className="avatar" src={author.avatar} />
-        <View className="author-info">
-          <Text className="author-name">{author.nickname}</Text>
-          <Text className="date">{getDisplayTime(start_date)}</Text>
+      {travelogueData.status === 2 && (
+        <View className="travelogue-footer">
+          <Image className="avatar" src={author.avatar} />
+          <View className="author-info">
+            <Text className="author-name">{author.nickname}</Text>
+            <Text className="date">{getDisplayTime(start_date)}</Text>
+          </View>
+          <View className="likes" onClick={handleLike}>
+            <View className={`icon like${liked ? ' liked' : ''}`} />
+            <Text>{(likeCount / 1000).toFixed(1)}k</Text>
+          </View>
         </View>
-        <View className="likes" onClick={handleLike}>
-          <View className={`icon like${liked ? ' liked' : ''}`} />
-          <Text>{(likeCount / 1000).toFixed(1)}k</Text>
-        </View>
-      </View>
+      )}
 
       {/* 视频播放器 */}
       {travelogueData?.video_url && (
@@ -583,19 +623,27 @@ const Travelogue: React.FC = () => {
       {showMenu && (
         <View className="popup-menu-mask" onClick={handleMenuClose}>
           <View className="popup-menu" onClick={e => e.stopPropagation()}>
-            <View className="popup-menu-item" onClick={handleShare}>
-              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%234FC3F7' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.03-.47-.09-.7l7.02-4.11A2.99 2.99 0 0 0 18 7.91c1.66 0 3 1.34 3 3s-1.34 3-3 3zm-12 2c-1.66 0-3-1.34-3-3s1.34-3 3-3c.24 0 .47.04.7.09l7.02-4.11A2.99 2.99 0 0 1 12 7.91c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3c-.76 0-1.44.3-1.96.77L4.91 11.3c-.05.23-.09.46-.09.7s.03.47.09.7l7.02 4.11c.52.47 1.2.77 1.96.77 1.66 0 3-1.34 3-3s-1.34-3-3-3z'/></svg>)`}} />
-              分享游记
-            </View>
+            {travelogueData.status === 2 && (
+              <View className="popup-menu-item" onClick={handleShare}>
+                <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%234FC3F7' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.03-.47-.09-.7l7.02-4.11A2.99 2.99 0 0 0 18 7.91c1.66 0 3 1.34 3 3s-1.34 3-3 3zm-12 2c-1.66 0-3-1.34-3-3s1.34-3 3-3c.24 0 .47.04.7.09l7.02-4.11A2.99 2.99 0 0 1 12 7.91c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3c-.76 0-1.44.3-1.96.77L4.91 11.3c-.05.23-.09.46-.09.7s.03.47.09.7l7.02 4.11c.52.47 1.2.77 1.96.77 1.66 0 3-1.34 3-3s-1.34-3-3-3z'/></svg>)`}} />
+                分享游记
+              </View>
+            )}
             {isAuthor && (
               <>
+                {travelogueData.status === 0 && (
+                  <View className="popup-menu-item" onClick={handlePublish}>
+                    <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%234CAF50' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M5 4v2h14V4H5zm0 10h4v6h6v-6h4l-7-7-7 7z'/></svg>)`}} />
+                    立即发布
+                  </View>
+                )}
                 <View className="popup-menu-item" onClick={handleEdit}>
-              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FFB300' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm14.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>)`}} />
-              编辑游记
+                  <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FFB300' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm14.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/></svg>)`}} />
+                  编辑游记
                 </View>
                 <View className="popup-menu-item delete" onClick={handleDelete}>
-              <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FF5252' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z'/></svg>)`}} />
-              删除游记
+                  <View className="popup-menu-icon" style={{backgroundImage: `url(data:image/svg+xml;utf8,<svg fill='%23FF5252' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z'/></svg>)`}} />
+                  删除游记
                 </View>
               </>
             )}
