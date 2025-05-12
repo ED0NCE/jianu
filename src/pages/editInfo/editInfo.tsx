@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { View, Text, Input, Picker, Form, Textarea } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import './editInfo.scss'
 import { useUserStore } from '../../store/userStore'
 import { checkLogin } from '../../utils/auth'
+import { debounce } from 'lodash'
 
 import { Button } from 'antd-mobile'
+import { updateUserInfo } from '@/api/user'
+import { register } from '@/api/login'
 // 中国省份列表
 const provinces = [
   '北京市', '上海市', '天津市', '重庆市', '河北省', '山西省', '辽宁省',
@@ -19,8 +22,7 @@ const provinces = [
 const genders = ['男', '女', '保密']
 
 interface UserInfo {
-  userid: string
-  name: string
+  nickname: string
   bio?: string
   gender: number // 0: 男, 1: 女, 2: 保密
   region: string
@@ -32,16 +34,17 @@ interface UserInfo {
 
 const EditInfoPage: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserInfo>({
-    userid: 'user123',
-    name: '旅行达人小美',
-    bio: '热爱旅行和摄影的90后，去过30+国家，喜欢记录旅途中的美好瞬间。',
-    gender: 1,
-    region: '上海市',
-    birthday: '1995-01-01'
+    nickname: '',
+    bio: '',
+    gender: 2,
+    region: '',
+    birthday: ''
   })
 
-  const [changePassword, setChangePassword] = useState(false)
+  // const [changePassword, setChangePassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null)
+  const [originalNickname, setOriginalNickname] = useState('')
 
   // 获取全局状态更新方法和用户信息
   const { profile, updateProfile } = useUserStore();
@@ -54,22 +57,54 @@ const EditInfoPage: React.FC = () => {
     // 如果已登录，从全局状态获取用户信息
     if (isLoggedIn) {
       setUserInfo({
-        userid: profile.userid,
-        name: profile.name,
+        nickname: profile.nickname,
         bio: profile.bio || '',
         gender: profile.gender,
         region: profile.region,
         birthday: profile.birthday
       });
+      setOriginalNickname(profile.nickname);
     }
   }, []); // 只在组件挂载时执行一次
 
+  // 检查用户名是否可用
+  const checkNickname = async(nickname: string) => {
+    // 如果用户名与原用户名相同，不需要检查
+    if (nickname === originalNickname) {
+      setIsNicknameAvailable(true);
+      return true;
+    }
+
+    try {
+      await register({nickname})
+      setIsNicknameAvailable(true);
+      return true;
+    } catch (error) {
+      console.error('用户名重复', error);
+      setIsNicknameAvailable(false);
+      return false;
+    }
+  }
+
+  // 防抖处理用户名检查
+  const debouncedCheckNickname = useCallback(
+    debounce(checkNickname, 500, { leading: false, trailing: true }),
+    [originalNickname]
+  );
+
   // 处理用户名变更
   const handleNameChange = (e) => {
+    const value = e.detail.value;
     setUserInfo({
       ...userInfo,
-      name: e.detail.value
-    })
+      nickname: value
+    });
+
+    if (value.trim()) {
+      debouncedCheckNickname(value);
+    } else {
+      setIsNicknameAvailable(null);
+    }
   }
 
   // 处理个人简介变更
@@ -104,34 +139,34 @@ const EditInfoPage: React.FC = () => {
     })
   }
 
-  // 处理旧密码输入
-  const handleOldPasswordChange = (e) => {
-    setUserInfo({
-      ...userInfo,
-      oldPassword: e.detail.value
-    })
-  }
+  // // 处理旧密码输入
+  // const handleOldPasswordChange = (e) => {
+  //   setUserInfo({
+  //     ...userInfo,
+  //     oldPassword: e.detail.value
+  //   })
+  // }
 
-  // 处理新密码输入
-  const handleNewPasswordChange = (e) => {
-    setUserInfo({
-      ...userInfo,
-      newPassword: e.detail.value
-    })
-  }
+  // // 处理新密码输入
+  // const handleNewPasswordChange = (e) => {
+  //   setUserInfo({
+  //     ...userInfo,
+  //     newPassword: e.detail.value
+  //   })
+  // }
 
-  // 处理确认密码输入
-  const handleConfirmPasswordChange = (e) => {
-    setUserInfo({
-      ...userInfo,
-      confirmPassword: e.detail.value
-    })
-  }
+  // // 处理确认密码输入
+  // const handleConfirmPasswordChange = (e) => {
+  //   setUserInfo({
+  //     ...userInfo,
+  //     confirmPassword: e.detail.value
+  //   })
+  // }
 
   // 表单提交
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // 表单验证
-    if (!userInfo.name.trim()) {
+    if (!userInfo.nickname.trim()) {
       Taro.showToast({
         title: '用户名不能为空',
         icon: 'none'
@@ -139,66 +174,55 @@ const EditInfoPage: React.FC = () => {
       return
     }
 
-    if (changePassword) {
-      if (!userInfo.oldPassword) {
-        Taro.showToast({
-          title: '请输入旧密码',
-          icon: 'none'
-        })
-        return
-      }
+    // 检查用户名是否可用
+    if (isNicknameAvailable === false) {
+      Taro.showToast({
+        title: '用户名已存在，请更换',
+        icon: 'none'
+      })
+      return
+    }
 
-      if (!userInfo.newPassword) {
+    // 检查用户名是否与原用户名不同且尚未验证
+    if (userInfo.nickname !== originalNickname && isNicknameAvailable === null) {
+      const isAvailable = await checkNickname(userInfo.nickname);
+      if (!isAvailable) {
         Taro.showToast({
-          title: '请输入新密码',
+          title: '用户名已存在，请更换',
           icon: 'none'
         })
-        return
-      }
-
-      if (userInfo.newPassword !== userInfo.confirmPassword) {
-        Taro.showToast({
-          title: '两次输入的密码不一致',
-          icon: 'none'
-        })
-        return
+        return;
       }
     }
+
+
 
     // 提交数据
     setLoading(true)
 
     // 构建提交的数据对象，排除密码相关字段
     const submitData = {
-      userid: userInfo.userid,
-      name: userInfo.name,
+      nickname: userInfo.nickname,
       bio: userInfo.bio,
       gender: userInfo.gender,
       region: userInfo.region,
       birthday: userInfo.birthday
     }
 
-    // 如果修改密码，添加密码相关字段
-    if (changePassword) {
-      Object.assign(submitData, {
-        oldPassword: userInfo.oldPassword,
-        newPassword: userInfo.newPassword
-      })
-    }
 
-    // 模拟API请求
-    setTimeout(() => {
-      setLoading(false)
+    setLoading(false)
 
-      // 更新全局状态（会自动更新到本地存储）
+    // 更新全局状态（会自动更新到本地存储）
+    try{
+      // await updateUserInfo({
+      //   ...userInfo})
       updateProfile({
-        name: userInfo.name,
+        nickname: userInfo.nickname,
         bio: userInfo.bio,
         gender: userInfo.gender,
         region: userInfo.region,
         birthday: userInfo.birthday
-      });
-
+      })
       Taro.showToast({
         title: '保存成功',
         icon: 'success',
@@ -212,7 +236,14 @@ const EditInfoPage: React.FC = () => {
           }, 2000)
         }
       })
-    }, 1500)
+    } catch (error) {
+      console.error('更新用户信息失败:', error);
+      Taro.showToast({
+        title: '更新失败',
+        icon: 'none'
+      });
+      return
+    }
   }
 
   // 取消修改，返回上一页
@@ -224,6 +255,13 @@ const EditInfoPage: React.FC = () => {
   const handleBack = () => {
     Taro.navigateBack()
   }
+
+  // 组件销毁时清除防抖函数
+  useEffect(() => {
+    return () => {
+      debouncedCheckNickname.cancel();
+    };
+  }, [debouncedCheckNickname]);
 
   return (
     <View className='edit-info-page'>
@@ -242,11 +280,17 @@ const EditInfoPage: React.FC = () => {
             <Text className='form-label'>用户名</Text>
             <Input
               className='form-input'
-              value={userInfo.name}
+              value={userInfo.nickname}
               onInput={handleNameChange}
               placeholder='请输入用户名'
               maxlength={20}
             />
+            {isNicknameAvailable === false && (
+              <Text className='error-text'>用户名已存在，请更换</Text>
+            )}
+            {isNicknameAvailable === true && userInfo.nickname !== originalNickname && (
+              <Text className='success-text'>用户名可用</Text>
+            )}
           </View>
 
           {/* 个人简介 */}
@@ -312,13 +356,13 @@ const EditInfoPage: React.FC = () => {
           </View>
 
           {/* 密码修改 */}
-          <View className='form-section'>
+          {/* <View className='form-section'>
             <View className='section-header' onClick={() => setChangePassword(!changePassword)}>
               <Text className='section-title'>修改密码</Text>
               <View className={`toggle-icon ${changePassword ? 'active' : ''}`} />
-            </View>
+            </View> */}
 
-            {changePassword && (
+            {/* {changePassword && (
               <View className='password-section'>
                 <View className='form-item'>
                   <Text className='form-label'>旧密码</Text>
@@ -353,8 +397,8 @@ const EditInfoPage: React.FC = () => {
                   />
                 </View>
               </View>
-            )}
-          </View>
+            )} */}
+          {/* </View> */}
 
           {/* 按钮区 */}
           <View className='form-buttons'>

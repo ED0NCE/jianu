@@ -6,7 +6,9 @@ import './login.scss'
 import { useUserStore } from '../../store/userStore'
 
 import { UserOutline, CameraOutline,PicturesOutline } from 'antd-mobile-icons'
-
+import { login, register } from '@/api/login'
+import { UserProfile } from '@/store/userStore'
+import type{ ApiResponse } from '@/types/user'
 const LoginPage: React.FC = () => {
   const [avatar, setAvatar] = useState<string>('')
   const [username, setUsername] = useState('')
@@ -17,6 +19,8 @@ const LoginPage: React.FC = () => {
   const [isUsernameRight, setIsUsernameRight] = useState<boolean>(true);
   const [returnUrl, setReturnUrl] = useState<string>(''); // 记录返回的URL
 
+  // 引入用户store
+  const { localLogin } = useUserStore()
   // 获取路由参数
   const router = useRouter();
 
@@ -32,9 +36,6 @@ const LoginPage: React.FC = () => {
       setReturnUrl(formattedUrl);
     }
   }, [router.params]);
-
-  // 引入用户store
-  const { login } = useUserStore()
 
   // 处理上传头像
   const chooseAvatar = async () => {
@@ -53,217 +54,122 @@ const LoginPage: React.FC = () => {
   }
 
   // 点击登录/注册
-  const handleRegisterOrLogin = (state: string) => {
+  const handleRegisterOrLogin = async(state: string) => {
     if (formValidate(state)) {
       // 校验成功，则发请求
       if(state === 'login') {
         // 显示加载
         Taro.showLoading({ title: '登录中...' })
-
-        // 登录接口--用户名密码后端校验 (已注释，使用本地验证)
-        // Taro.request({
-        //   url: 'https://your-backend-domain.com/api/user/login',
-        //   method: 'POST',
-        //   data: { username, password },
-        //   success: (res) => {
-        //     Taro.hideLoading()
-
-        //     if (res.statusCode === 200 && res.data.success) {
-        //       // 保存用户信息和token到store和本地存储
-        //       login({
-        //         token: res.data.token,
-        //         profile: res.data.userInfo
-        //       })
-
-        //       Taro.showToast({
-        //         title: '登录成功',
-        //         icon: 'success',
-        //         duration: 1500,
-        //         success: () => {
-        //           // 获取页面历史
-        //           const pages = getCurrentPages()
-
-        //           // 如果有返回地址参数，优先使用它
-        //           if (returnUrl) {
-        //             setTimeout(() => {
-        //               Taro.redirectTo({
-        //                 url: returnUrl
-        //               })
-        //             }, 1500)
-        //             return;
-        //           }
-
-        //           // 如果有上一个页面，则返回
-        //           if (pages.length > 1) {
-        //             setTimeout(() => {
-        //               Taro.navigateBack()
-        //             }, 1500)
-        //           } else {
-        //             // 否则跳转到首页
-        //             setTimeout(() => {
-        //               Taro.switchTab({
-        //                 url: '/pages/index/index'
-        //               })
-        //             }, 1500)
-        //           }
-        //         }
-        //       })
-        //     } else {
-        //       Taro.showToast({
-        //         title: res.data.message || '登录失败，请检查用户名和密码',
-        //         icon: 'none'
-        //       })
-        //     }
-        //   },
-        //   fail: (err) => {
-        //     Taro.hideLoading()
-        //     Taro.showToast({
-        //       title: '网络错误，请稍后再试',
-        //       icon: 'none'
-        //     })
-        //     console.error('登录失败:', err)
-
-        //     // 开发环境模拟登录成功
-        //     if (process.env.NODE_ENV === 'development') {
-        //       // 使用模拟数据登录
-        //       login({
-        //         token: 'dev-token-123456',
-        //         profile: {
-        //           userid: 'user123',
-        //           avatar: avatar || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
-        //           name: username || '旅行达人小美',
-        //           travels: 128,
-        //           likes: '2.4k',
-        //           bio: '热爱旅行和摄影的90后，去过30+国家，喜欢记录旅途中的美好瞬间。',
-        //           gender: 1,
-        //           region: '上海市',
-        //           birthday: '1995-01-01'
-        //         }
-        //       })
-
-        //       Taro.showToast({
-        //         title: '开发环境登录成功',
-        //         icon: 'success',
-        //         duration: 1500,
-        //         success: () => {
-        //           // 获取页面历史
-        //           const pages = getCurrentPages()
-
-        //           // 如果有返回地址参数，优先使用它
-        //           if (returnUrl) {
-        //             setTimeout(() => {
-        //               Taro.redirectTo({
-        //                 url: returnUrl
-        //               })
-        //             }, 1500)
-        //             return;
-        //           }
-
-        //           // 如果有上一个页面，则返回
-        //           if (pages.length > 1) {
-        //             setTimeout(() => {
-        //               Taro.navigateBack()
-        //             }, 1500)
-        //           } else {
-        //             // 否则跳转到首页
-        //             setTimeout(() => {
-        //               Taro.switchTab({
-        //                 url: '/pages/index/index'
-        //               })
-        //             }, 1500)
-        //           }
-        //         }
-        //       })
-        //     }
-        //   }
-        // })
-
-        // 模拟登录校验：检查用户名和密码
-        setTimeout(() => {
-          Taro.hideLoading()
-
-          if (username === 'yanshil' && password === '123456w') {
-            // 登录成功
-            login({
-              token: 'mock-token-123456',
-              profile: {
-                userid: 'yanshil',
-                avatar: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
-                name: username,
-                travels: 128,
-                likes: '2.4k',
-                bio: '热爱旅行和摄影的90后，去过30+国家，喜欢记录旅途中的美好瞬间。',
-                gender: 1,
-                region: '上海市',
-                birthday: '1995-01-01'
-              }
-            })
-
-            Taro.showToast({
-              title: '登录成功',
-              icon: 'success',
-              duration: 1500,
-              success: () => {
-                // 获取页面历史
-                const pages = getCurrentPages()
-
-                console.log(returnUrl)
-                // 如果有返回地址参数，优先使用它
-                if (returnUrl) {
-                  setTimeout(() => {
-                    // 确保returnUrl格式正确
-                    Taro.redirectTo({
-                      url: returnUrl
-                    })
-                  }, 1500)
-                  return;
+        try {
+          // const res = await login({
+          //   username,
+          //   password
+          // }) as { data: { token: string, profile: UserProfile } }
+          const res = {
+            status: 200,
+            message: '登录成功',
+            data: {
+                "token": "est Ut",
+                "profile": {
+                    "nickname": "骑中海",
+                    "avatar": "https://avatars.githubusercontent.com/u/42030813",
+                    "travels": 123,
+                    "likes": 250,
+                    "bio": "长椅粉丝，哲学家🐭",
+                    "gender": 0,
+                    "region": "华南",
+                    "birthday": "2025-02-07"
                 }
-
-                // 如果有上一个页面，则返回
-                if (pages.length > 1) {
-                  setTimeout(() => {
-                    Taro.navigateBack()
-                  }, 1500)
-                } else {
-                  // 否则跳转到首页
-                  setTimeout(() => {
-                    Taro.redirectTo({
-                      url: '/pages/index/index'
-                    })
-                  }, 1500)
-                }
-              }
-            })
-          } else {
-            // 登录失败
-            Taro.showToast({
-              title: '用户名或者密码不正确',
-              icon: 'none'
-            })
+            }
           }
-        }, 800) // 模拟网络延迟
+          // 存入本地和store
+          localLogin({ token: res.data.token, profile: res.data.profile })
+          Taro.hideLoading()
+        }catch (err) {
+          console.error(err)
+          Taro.hideLoading()
+          Taro.showToast({
+            title: '登录失败',
+            icon: 'none',
+            duration: 500
+          })
+          return
+        }
       } else {
         // 注册接口
-        // TODO: 调用注册接口
-        console.log('注册信息：', { username, password, confirmPwd, avatar })
-        Taro.navigateTo({
-          url: '/pages/index/index'
-        })
+        Taro.showLoading({ title: '注册中...' })
+        try {
+          // const res = await register({ nickname: username, password, avatar }) as ApiResponse
+          const res = {
+            status: 200,
+            message: '注册成功',
+            data: {
+              "token": "est Ut",
+              "profile": {
+                "nickname": "骑中海",
+                "avatar": "https://avatars.githubusercontent.com/u/42030813",
+                "travels": 123,
+                "likes": 2500,
+                "bio": "长椅粉丝，哲学家🐭",
+                "gender": 0,
+                "region": "华南",
+                "birthday": "2025-02-07"
+              }
+            }
+          }
+          localLogin({ token: res.data.token, profile: res.data.profile })
+          Taro.hideLoading()
+        }catch (err) {
+          console.error(err)
+          Taro.hideLoading()
+          Taro.showToast({
+            title: '注册失败',
+            icon: 'none',
+            duration: 500
+          })
+          return
+        }
       }
+      Taro.showToast({
+        title: state === 'login' ? '登录成功' : '注册成功',
+        icon: 'success',
+        duration: 500,
+        success: () => {
+          // 获取页面历史
+          const pages = getCurrentPages()
+
+          console.log(returnUrl)
+          // 如果有返回地址参数，优先使用它
+          if (returnUrl) {
+            setTimeout(() => {
+              // 确保returnUrl格式正确
+              Taro.redirectTo({
+                url: returnUrl
+              })
+            }, 600)
+            return;
+          }
+
+          // 如果有上一个页面，则返回
+          if (pages.length > 1) {
+            setTimeout(() => {
+              Taro.navigateBack()
+            }, 600)
+          } else {
+            // 否则跳转到首页
+            setTimeout(() => {
+              Taro.redirectTo({
+                url: '/pages/index/index'
+              })
+            }, 600)
+          }
+        }
+      })
     }
   }
 
   // 表单校验
   const formValidate = (state: string) => {
-    // 密码校验
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,15}$/;
-    if (!passwordRegex.test(password)) {
-      Taro.showToast({
-        title: '密码必须包含至少一个字母和一个数字，且长度为6到15个字符',
-        icon: 'none'
-      })
-      return false;
-    }
     // 确认密码校验（仅在注册时）
     if (state === 'register') {
       if (!avatar) {
@@ -271,6 +177,13 @@ const LoginPage: React.FC = () => {
           title: '请上传头像',
           icon: 'none'
         });
+        return false;
+      }
+      if (!username || !isUsernameAvailable || !isUsernameRight) {
+        Taro.showToast({
+          title: '请输入正确的用户名',
+          icon: 'none'
+        })
         return false;
       }
       if (password !== confirmPwd) {
@@ -281,32 +194,31 @@ const LoginPage: React.FC = () => {
         return false;
       }
     }
+    // 密码校验
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,15}$/;
+    if (!passwordRegex.test(password)) {
+      Taro.showToast({
+        title: '密码必须包含至少一个字母和一个数字，且长度为6到15个字符',
+        icon: 'none'
+      })
+      return false;
+    }
     return true
   }
   // 检查用户名是否可用
-  const checkUsername =  (username: string) => {
-    // try {
-    //   const res = await Taro.request({
-    //     url: '/api/checkUsername',
-    //     method: 'POST',
-    //     data: { username },
-    //   });
-    //   setIsUsernameAvailable(res.data.isAvailable); // 假设后端返回 { isAvailable: boolean }
-    // } catch (err) {
-    //   console.error('检查用户名失败', err);
-    //   setIsUsernameAvailable(false); // 如果请求失败，默认认为用户名不可用
-    // }
+  const checkUsername = async(username: string) => {
     const usernameRegex = /^[a-zA-Z0-9_]{3,15}$/;
     if (!usernameRegex.test(username)) {
       setIsUsernameRight(false);
     }else {
       setIsUsernameRight(true);
     }
-    // 模拟
-    if (username === 'yanshil') {
-      setIsUsernameAvailable(false)
-    } else {
-      setIsUsernameAvailable(true)
+    try {
+      await register({ nickname: username })
+      setIsUsernameAvailable(true);
+    }catch (err) {
+      console.error('用户名重复', err);
+      setIsUsernameAvailable(true); // 如果请求失败，默认认为用户名不可用
     }
   }
 

@@ -1,26 +1,31 @@
 import { http } from './request'
 
-// 获取游记列表
+// 获取游记列表(status: 已发布/审核中/未通过)
 export const getTravelogueList = (params: {
   page: number;
   limit: number;
   status: string;
-}) => http.get('/travelogue/list');
+}) => http.get(`/travelogue/list?page=${params.page}&limit=${params.limit}&status=${params.status}`);
 
-// 获取用户游记列表(type: 已发布/审核中/未通过/我喜欢)
+// 获取用户游记列表(status: 已发布/审核中/未通过/我喜欢)
 export const getUserTravelogueList = (params: {
-  user_id: number;
+  nickname: string;
   page: number;
   limit: number;
-  type: string;
-}) => http.get(`/travelogue/${params.user_id}/list`);
-
-// 获取消息列表(status: 全部消息/审核通知/点赞)
-export const getMessageList = (params: {
-  user_id: number;
-  status: string;
-}) => http.get(`/message/${params.user_id}/list`);
+  status: number;
+}) => http.get(`/travelogue/user/list`, {data: params});
 
 // 搜索游记(keyword: 搜索游记/用户昵称)
-export const searchTravelogue = (keyword: string) => http.get(`/travelogue/search?keyword=${keyword}`);
+export const searchTravelogue = (params:{
+  keyword: string;
+  page: number;
+  limit: number;
+  status: string;
+} ) => http.get(`/travelogue/search`, {data: params});
+
+// 点赞游记
+export const asyncAddLikedTravelogue = (travel_id: string) => http.post(`/travelogue/addLike/${travel_id}`);
+
+// 取消点赞游记
+export const asyncRemoveLikedTravelogue = (travel_id: string) => http.post(`/travelogue/cancelLike/${travel_id}`);
 

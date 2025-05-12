@@ -58,6 +58,20 @@
   padding: 14px 16px;
   border-bottom: 1px solid #f0f0f0;
   position: relative;
+
+  .error-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ff4d4f;
+  }
+
+  .success-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #52c41a;
+  }
 }
 
 .form-label {

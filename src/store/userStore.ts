@@ -2,11 +2,10 @@ import { create } from 'zustand'
 import Taro from '@tarojs/taro'
 
 export interface UserProfile {
-  userid: string
+  nickname: string
   avatar: string
-  name: string
   travels: number
-  likes: string
+  likes: number
   bio?: string  // 设置为可选，允许为空
   gender: number // 0: 男, 1: 女, 2: 保密
   region: string
@@ -19,18 +18,17 @@ interface UserState {
   isLoggedIn: boolean
   updateProfile: (data: Partial<UserProfile>) => void
   setLoggedIn: (status: boolean) => void
-  login: (userData: { token: string, profile: UserProfile }) => void
-  logout: () => void
+  localLogin: (userData: { token: string, profile: UserProfile }) => void
+  localLogout: () => void
   initFromStorage: () => boolean
 }
 
 // 默认用户数据
 const defaultProfile: UserProfile = {
-  userid: '',
   avatar: '',
-  name: '',
+  nickname: '',
   travels: 0,
-  likes: '0',
+  likes: 0,
   bio: '',
   gender: 2,
   region: '',
@@ -86,7 +84,7 @@ export const useUserStore = create<UserState>((set, get) => {
     setLoggedIn: (status) => set(() => ({ isLoggedIn: status })),
 
     // 登录并保存用户信息到本地
-    login: (userData) => {
+    localLogin: (userData) => {
       // 更新状态
       set(() => ({
         isLoggedIn: true,
@@ -105,7 +103,7 @@ export const useUserStore = create<UserState>((set, get) => {
     },
 
     // 登出并清除本地用户信息
-    logout: () => {
+    localLogout: () => {
       // 清除状态
       set(() => ({
         isLoggedIn: false,

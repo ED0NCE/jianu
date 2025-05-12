@@ -1,11 +1,11 @@
 import { http } from './request';
 
 // 登录
-export const login = (data: { username: string; password: string }) =>
+export const login = (data: { nickname: string; password: string }) =>
   http.post('/login', data, { loading: true });
 
 // 注册
-export const register = (data: { username: string; password: string; avatar: string }) =>
+export const register = (data: { nickname: string; password?: string; avatar?: string }) =>
   http.post('/register', data, { loading: true });
 
 // 退出登录

@@ -86,6 +86,7 @@ const PersonalPage: React.FC = () => {
   const [likedPosts, setLikedPosts] = useState<WaterfallCardProps[]>([])
   const [showMenu, setShowMenu] = useState(false)
   const [avatarActive, setAvatarActive] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // 从全局状态获取用户资料和登出方法 - store已自动从本地存储初始化
   const { profile, isLoggedIn, logout, updateProfile } = useUserStore()
@@ -102,7 +103,7 @@ const PersonalPage: React.FC = () => {
       // 页面显示时，如果需要可以刷新数据
       if (isLoggedIn && activeTab === 3) {
         // 重新加载喜欢列表
-        setLikedPosts(getLikedTravelogues());
+        loadLikedPosts();
       }
     }
 
@@ -113,10 +114,27 @@ const PersonalPage: React.FC = () => {
     }
   }, [isLoggedIn, activeTab])
 
+  // 加载喜欢的游记
+  const loadLikedPosts = () => {
+    setIsLoading(true);
+    // 获取喜欢的游记数据
+    const liked = getLikedTravelogues();
+    setLikedPosts(liked);
+    setIsLoading(false);
+  }
+
   // 当切换到"我喜欢"标签时，加载喜欢的游记
   useEffect(() => {
+    setIsLoading(true);
     if (activeTab === 3) {
-      setLikedPosts(getLikedTravelogues());
+      // 使用setTimeout延迟加载，确保UI先更新
+      setTimeout(() => {
+        loadLikedPosts();
+      }, 10);
+    } else {
+      // 根据 activeTab 请求不同状态的数据
+      setPosts(activeTab === 0 ? mockPosts : []);
+      setIsLoading(false);
     }
   }, [activeTab])
 
@@ -127,8 +145,7 @@ const PersonalPage: React.FC = () => {
       // 在"我喜欢"标签页中，立即获取最新的喜欢列表
       // 使用setTimeout确保在本地存储更新后获取数据
       setTimeout(() => {
-        const updatedLikedPosts = getLikedTravelogues();
-        setLikedPosts(updatedLikedPosts);
+        loadLikedPosts();
       }, 100);
     } else {
       // 其他标签页正常更新状态
@@ -138,6 +155,12 @@ const PersonalPage: React.FC = () => {
         return updatedPosts
       })
     }
+  }
+
+  // 处理标签切换
+  const handleTabChange = (index: number) => {
+    setIsLoading(true);
+    setActiveTab(index);
   }
 
   // 菜单事件
@@ -264,13 +287,6 @@ const PersonalPage: React.FC = () => {
     })
   }
 
-  useEffect(() => {
-    // 根据 activeTab 请求不同状态的数据
-    if (activeTab !== 3) {
-      setPosts(activeTab === 0 ? mockPosts : [])
-    }
-  }, [activeTab])
-
   // 如果未登录状态，不显示内容
   if (!isLoggedIn) {
     return <View className="page page-personal loading"></View>
@@ -338,7 +354,7 @@ const PersonalPage: React.FC = () => {
           <Text
             key={i}
             className={`tab-item ${activeTab === i ? 'active' : ''}`}
-            onClick={() => setActiveTab(i)}
+            onClick={() => handleTabChange(i)}
           >
             {t}
           </Text>
@@ -347,12 +363,16 @@ const PersonalPage: React.FC = () => {
 
       {/* 内容 */}
       <ScrollView scrollY className="wf-container">
-        {currentPosts && currentPosts.length > 0 ? (
+        {isLoading ? (
+          <View className="loading-container">
+            <View className="loading-state">加载中...</View>
+          </View>
+        ) : currentPosts && currentPosts.length > 0 ? (
           <>
             <View className="wf-column">
               {currentPosts.filter((_, i) => i % 2 === 0).map((item, idx) => (
                 <WaterfallCard
-                  key={idx}
+                  key={`${activeTab}-${idx}-${item.id}`}
                   {...item}
                   onClick={item.id ? () => handleCardClick(item.id!) : undefined}
                   onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}
@@ -362,7 +382,7 @@ const PersonalPage: React.FC = () => {
             <View className="wf-column">
               {currentPosts.filter((_, i) => i % 2 === 1).map((item, idx) => (
                 <WaterfallCard
-                  key={idx}
+                  key={`${activeTab}-${idx}-${item.id}`}
                   {...item}
                   onClick={item.id ? () => handleCardClick(item.id!) : undefined}
                   onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}

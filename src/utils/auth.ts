@@ -53,7 +53,7 @@ export const checkLogin = (redirect = true): boolean => {
     Taro.showToast({
       title: '请先登录',
       icon: 'none',
-      duration: 1500,
+      duration: 500,
       success: () => {
         setTimeout(() => {
           // 获取当前页面作为跳转参数，以便登录后能返回
@@ -70,7 +70,7 @@ export const checkLogin = (redirect = true): boolean => {
           Taro.navigateTo({
             url: loginUrl
           })
-        }, 1500)
+        }, 100)
       }
     })
   }
