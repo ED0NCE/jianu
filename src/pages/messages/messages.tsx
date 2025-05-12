@@ -1,40 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, Image, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro'
 import './messages.scss'
-import { useUserStore } from '../../store/userStore'
+
 import { checkLogin } from '../../utils/auth'
 import { LeftOutline } from 'antd-mobile-icons'
+import { getMessageList } from '@/api/user'
+import type{ Message, ApiResponse } from '@/types/user'
+import { MessageType, ReviewStatus } from '@/types/user'
 
-// 消息类型
-enum MessageType {
-  REVIEW = 'review',   // 游记审核
-  LIKE = 'like',      // 游记点赞
-}
-
-// 审核状态
-enum ReviewStatus {
-  PENDING = 'pending',    // 审核中
-  APPROVED = 'approved',  // 通过
-  REJECTED = 'rejected',  // 拒绝
-}
-
-// 消息接口
-interface Message {
-  id: string
-  type: MessageType
-  title: string
-  content: string
-  status?: ReviewStatus
-  createdAt: string
-  isRead: boolean
-  thumbnail?: string
-  fromUser?: {
-    id: string
-    name: string
-    avatar: string
-  }
-}
 
 // 模拟消息数据
 const mockMessages: Message[] = [
@@ -77,8 +51,7 @@ const mockMessages: Message[] = [
     isRead: false,
     thumbnail: 'https://images.unsplash.com/photo-1613677135043-a2512fbf49fa',
     fromUser: {
-      id: 'user1',
-      name: '旅行者小明',
+      nickname: '旅行者小明',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
     },
   },
@@ -91,8 +64,7 @@ const mockMessages: Message[] = [
     isRead: false,
     thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
     fromUser: {
-      id: 'user2',
-      name: '旅行达人张三',
+      nickname: '旅行达人张三',
       avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
     },
   },
@@ -105,44 +77,77 @@ const mockMessages: Message[] = [
     isRead: false,
     thumbnail: 'https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403',
     fromUser: {
-      id: 'user3',
-      name: '摄影师李四',
+      nickname: '摄影师李四',
       avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61',
     },
   }
 ]
 
+
 const MessagePage: React.FC = () => {
-  const { profile } = useUserStore()
+
   const [activeTab, setActiveTab] = useState(0)
   const [messages, setMessages] = useState<Message[]>([])
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([])
+  const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [nickname, setNickname] = useState('')
 
   // 检查登录状态
   useEffect(() => {
     checkLogin();
   }, []);
 
-  // 初始化消息数据（从本地存储加载或使用默认数据）
-  useEffect(() => {
-    try {
-      const messagesStr = Taro.getStorageSync('messages')
+  // 页面显示时获取消息
+  useDidShow(() => {
+    fetchMessages();
+    const userInfo = Taro.getStorageSync('userProfile')
+    setNickname(userInfo.nickname)
+  });
 
-      if (messagesStr) {
-        // 如果存在，使用存储的消息
-        const savedMessages = JSON.parse(messagesStr)
-        setMessages(savedMessages)
+  // 从服务器获取消息
+  const fetchMessages = async () => {
+    setLoading(true);
+    try {
+      const response = await getMessageList({nickname}) as ApiResponse;
+      // 如果API返回成功，使用API数据
+      if (response && response.data) {
+        setMessages(response.data);
+        // 保存到本地存储
+        Taro.setStorageSync('messages', JSON.stringify(response.data));
       } else {
-        // 如果不存在，使用模拟数据并保存到本地
-        setMessages(mockMessages)
-        Taro.setStorageSync('messages', JSON.stringify(mockMessages))
+        // 如果API返回为空，尝试使用本地存储数据
+        loadLocalMessages();
       }
     } catch (error) {
-      console.error('初始化消息失败:', error)
-      // 出错时使用模拟数据
-      setMessages(mockMessages)
+      console.error('获取消息列表失败:', error);
+      // 如果API请求失败，尝试使用本地存储数据
+      loadLocalMessages();
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  }, [])
+  };
+
+  // 从本地存储加载消息
+  const loadLocalMessages = () => {
+    try {
+      const messagesStr = Taro.getStorageSync('messages');
+      if (messagesStr) {
+        // 如果存在，使用存储的消息
+        const savedMessages = JSON.parse(messagesStr);
+        setMessages(savedMessages);
+      } else {
+        // 如果不存在，使用模拟数据并保存到本地
+        setMessages(mockMessages);
+        Taro.setStorageSync('messages', JSON.stringify(mockMessages));
+      }
+    } catch (error) {
+      console.error('初始化消息失败:', error);
+      // 出错时使用模拟数据
+      setMessages(mockMessages);
+    }
+  };
 
   // 标签页
   const tabs = ['全部消息', '审核通知', '点赞']
@@ -226,6 +231,14 @@ const MessagePage: React.FC = () => {
     return filteredMessages.filter(msg => !msg.isRead).length
   }
 
+  // 处理下拉刷新
+  usePullDownRefresh(() => {
+    setRefreshing(true);
+    fetchMessages().then(() => {
+      Taro.stopPullDownRefresh();
+    });
+  });
+
   return (
     <View className="page page-messages">
       {/* 顶部标题栏 */}
@@ -252,8 +265,15 @@ const MessagePage: React.FC = () => {
       </View>
 
       {/* 消息列表 */}
-      <ScrollView scrollY className="message-list">
-        {filteredMessages.length > 0 ? (
+      <ScrollView
+        scrollY
+        className="message-list"
+      >
+        {(loading && !refreshing) ? (
+          <View className="loading-container">
+            <View className="loading-state">加载中...</View>
+          </View>
+        ) : filteredMessages.length > 0 ? (
           filteredMessages.map(message => (
             <View
               key={message.id}

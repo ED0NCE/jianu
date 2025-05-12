@@ -1,5 +1,6 @@
-export default {
-  navigationBarTitleText: '消息中心',
+export default definePageConfig({
+  navigationBarTitleText: '我的消息',
   navigationStyle: 'custom',
-  enablePullDownRefresh: true
-} 
+  enablePullDownRefresh: true,
+  backgroundTextStyle: 'dark'
+})

@@ -1,0 +1,144 @@
+.virtual-waterfall-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.virtual-waterfall-content {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.virtual-waterfall-column {
+  flex: 1;
+  padding: 0 10px 0 15px;
+  &:last-child {
+    padding: 0 15px 0 5px;
+  }
+}
+
+// 卡片之间的间距
+.virtual-waterfall-column .wf-card {
+  margin-bottom: 10px;
+}
+
+.loading-indicator,
+.no-more-data {
+  text-align: center;
+  padding: 20px 0;
+  color: #999;
+  font-size: 14px;
+  width: 100%;
+}
+
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top-color: #666;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 骨架屏样式 */
+.skeleton {
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.skeleton-pulse {
+  position: relative;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    animation: pulse 1.5s infinite;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 骨架屏卡片样式 */
+.wf-card.skeleton {
+  .wf-card__img-wrap {
+    height: 120px;
+    width: 100%;
+    background: #e0e0e0;
+  }
+
+  .wf-card__title-skeleton {
+    height: 16px;
+    width: 90%;
+    margin-bottom: 10px;
+  }
+
+  .wf-card__info-skeleton {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+
+    .wf-card__meta-skeleton {
+      height: 30px;
+      width: 40px;
+    }
+  }
+
+  .wf-card__footer-skeleton {
+    display: flex;
+    align-items: center;
+
+    .wf-card__avatar-skeleton {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .wf-card__nickname-skeleton {
+      height: 14px;
+      width: 60%;
+      flex: 1;
+    }
+
+    .wf-card__likes-skeleton {
+      height: 14px;
+      width: 30px;
+      margin-left: auto;
+    }
+  }
+}

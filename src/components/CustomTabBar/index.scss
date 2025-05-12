@@ -21,12 +21,24 @@
     font-size: 22px;
     margin-bottom: 4px;
   }
-  .icon-add {
+  .icon-add-bg {
     position: absolute;
-    top: -10px;
-    font-size: 40px;
-    color: aquamarine;
+    top: -15px;
+    width: 40px;
+    height: 40px;
+    background-color: #cb5656;
+    border: 3px solid #cb5656;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .icon-add {
+      font-size: 26px;
+      margin-bottom: 0px;
+      color: #fff;
+    }
   }
+
   .edit-text {
     display: block;
     padding-top: 22px;

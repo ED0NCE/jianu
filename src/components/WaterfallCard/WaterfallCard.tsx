@@ -15,14 +15,14 @@ export type { WaterfallCardProps };
  */
 const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
   const {
-    id,
-    tag,
-    imageUrl,
-    title,
-    days,
-    people,
-    cost,
-    likes,
+    travel_id,
+    tag = '',
+    images = [],
+    title = '',
+    days = 0,
+    participants = 0,
+    expenditure = '',
+    likes = 0,
     date,
     avatarUrl,
     nickname,
@@ -35,10 +35,10 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
 
   // 检查初始点赞状态
   useEffect(() => {
-    if (id) {
-      setIsLikedState(isLiked(id));
+    if (travel_id) {
+      setIsLikedState(isLiked(travel_id));
     }
-  }, [id]);
+  }, [travel_id]);
 
   // 同步传入的likes和本地状态
   useEffect(() => {
@@ -67,7 +67,7 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
     // 阻止事件冒泡到卡片点击
     e.stopPropagation();
 
-    if (!id) return;
+    if (!travel_id) return;
 
     const newLikes = isLikedState ? localLikes - 1 : localLikes + 1;
 
@@ -88,18 +88,18 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
     onLikeChange && onLikeChange(newLikes);
 
     // 异步调用API
-    toggleLike(Number(id))
+    toggleLike(Number(travel_id))
       .catch(error => {
         console.error(isLikedState ? '取消点赞失败:' : '点赞失败:', error);
         // 错误时重试
-        retryToggleLike(Number(id));
+        retryToggleLike(Number(travel_id));
       });
-  }, [id, isLikedState, localLikes, props, onLikeChange, retryToggleLike]);
+  }, [travel_id, isLikedState, localLikes, props, onLikeChange, retryToggleLike]);
 
   return (
     <View className="wf-card" onClick={onClick}>
       <View className="wf-card__img-wrap">
-        <Image src={imageUrl} className="wf-card__img" mode="aspectFill" />
+        <Image src={images && images.length > 0 ? images[0] : 'https://via.placeholder.com/300'} className="wf-card__img" mode="aspectFill" />
         <Text className="wf-card__tag">{tag}</Text>
       </View>
       <View className="wf-card__body">
@@ -115,11 +115,11 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
               </View>
               <View className="wf-card__meta">
                 <Text>人数</Text>
-                <Text className="wf-card__meta-num">{people}</Text>
+                <Text className="wf-card__meta-num">{participants}</Text>
               </View>
               <View className="wf-card__meta">
                 <Text>花销</Text>
-                <Text className="wf-card__meta-num">{cost}</Text>
+                <Text className="wf-card__meta-num">{expenditure}</Text>
               </View>
             </>
           )}

@@ -3,14 +3,14 @@ import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import './index.scss'
 
-import { UserOutline, CompassOutline, AddCircleOutline } from 'antd-mobile-icons'
+import { UserOutline, CompassOutline, AddOutline } from 'antd-mobile-icons'
 const CustomTabBar = () => {
   const router = useRouter();
   const [selected, setSelected] = useState(0);
 
   const tabs = [
     { path: '/pages/index/index', name: '游记', icon: <CompassOutline className='icon icon-index'/>},
-    { path: '/pages/edit/edit',   name: '发布', icon: <AddCircleOutline className='icon icon-add'/> },
+    { path: '/pages/edit/edit',   name: '发布', icon: <View className='icon icon-add-bg'> <AddOutline className='icon icon-add'/> </View>},
     { path: '/pages/personal/personal', name: '我的',icon: <UserOutline className='icon icon-user'/> },
   ];
 
