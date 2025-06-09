@@ -4,8 +4,13 @@ import { HeartOutline, HeartFill } from 'antd-mobile-icons'
 import Taro from '@tarojs/taro'
 import type { WaterfallCardProps } from '../../types/waterfallCard'
 import './WaterfallCard.scss'
-import { isLiked, toggleLikedTravelogue } from '../../utils/likeStorage'
 import { toggleLike } from '../../api/user'
+
+// 定义API响应类型
+interface ToggleLikeResponse {
+  isLiked: boolean;
+  likeCount: number;
+}
 
 // 重新导出WaterfallCardProps类型
 export type { WaterfallCardProps };
@@ -26,6 +31,7 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
     date,
     avatarUrl,
     nickname,
+    is_liked,
     onClick,
     onLikeChange
   } = props;
@@ -36,7 +42,7 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
   // 检查初始点赞状态
   useEffect(() => {
     if (travel_id) {
-      setIsLikedState(isLiked(travel_id));
+      setIsLikedState(is_liked || false);
     }
   }, [travel_id]);
 
@@ -81,20 +87,29 @@ const WaterfallCard: React.FC<WaterfallCardProps> = (props) => {
       icon: 'none'
     });
 
-    // 更新本地存储
-    toggleLikedTravelogue({...props, likes: newLikes});
-
     // 点赞后立即通知父组件
     onLikeChange && onLikeChange(newLikes);
 
     // 异步调用API
     toggleLike(Number(travel_id))
+      .then(response => {
+        // 如果API返回了更新后的点赞状态，使用API返回的值
+        // 假设API返回的数据就是点赞列表对象
+        if (response) {
+          const responseData = response as ToggleLikeResponse;
+          // 使用服务器返回的最新状态更新UI
+          setIsLikedState(responseData.isLiked);
+          setLocalLikes(responseData.likeCount);
+          // 通知父组件最新的点赞数
+          onLikeChange && onLikeChange(responseData.likeCount);
+        }
+      })
       .catch(error => {
         console.error(isLikedState ? '取消点赞失败:' : '点赞失败:', error);
         // 错误时重试
         retryToggleLike(Number(travel_id));
       });
-  }, [travel_id, isLikedState, localLikes, props, onLikeChange, retryToggleLike]);
+  }, [travel_id, isLikedState, localLikes, onLikeChange, retryToggleLike]);
 
   return (
     <View className="wf-card" onClick={onClick}>

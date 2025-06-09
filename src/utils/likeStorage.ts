@@ -28,7 +28,7 @@ export const getLikedTravelogues = (): WaterfallCardProps[] => {
 export const isLiked = (id: string): boolean => {
   if (!id) return false;
   const likedList = getLikedTravelogues();
-  return likedList.some(item => item.id === id);
+  return likedList.some(item => item.travel_id === id);
 };
 
 /**
@@ -36,12 +36,12 @@ export const isLiked = (id: string): boolean => {
  * @param travelogue 游记数据
  */
 export const addLikedTravelogue = (travelogue: WaterfallCardProps): void => {
-  if (!travelogue || !travelogue.id) return;
+  if (!travelogue || !travelogue.travel_id) return;
 
   try {
     const likedList = getLikedTravelogues();
     // 如果已存在，先移除旧的
-    const filteredList = likedList.filter(item => item.id !== travelogue.id);
+    const filteredList = likedList.filter(item => item.travel_id !== travelogue.travel_id);
     // Add to the beginning of the list
     const newList = [travelogue, ...filteredList];
     Taro.setStorageSync(STORAGE_KEY, JSON.stringify(newList));
@@ -50,38 +50,4 @@ export const addLikedTravelogue = (travelogue: WaterfallCardProps): void => {
   }
 };
 
-// 从喜欢列表中移除游记
-/**
- * 从喜欢列表中移除游记
- * @param id 游记ID
- * @returns
- */
-export const removeLikedTravelogue = (id: string): void => {
-  if (!id) return;
 
-  try {
-    const likedList = getLikedTravelogues();
-    const newList = likedList.filter(item => item.id !== id);
-    Taro.setStorageSync(STORAGE_KEY, JSON.stringify(newList));
-  } catch (error) {
-    console.error('移除喜欢的游记失败:', error);
-  }
-};
-
-/**
- * 切换点赞状态
- * @param travelogue 游记数据
- * @returns 新的点赞状态 (true = 已点赞, false = 未点赞)
- */
-export const toggleLikedTravelogue = (travelogue: WaterfallCardProps): boolean => {
-  if (!travelogue || !travelogue.id) return false;
-
-  const liked = isLiked(travelogue.id);
-  if (liked) {
-    removeLikedTravelogue(travelogue.id);
-    return false;
-  } else {
-    addLikedTravelogue(travelogue);
-    return true;
-  }
-};

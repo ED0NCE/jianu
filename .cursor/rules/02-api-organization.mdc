@@ -1,0 +1,45 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# API Organization
+
+All API requests must be organized in the [api/](mdc:src/api) directory following these guidelines:
+
+## Structure
+- Group API calls by domain/feature in separate files
+- Example: `userApi.ts`, `diaryApi.ts`, `destinationApi.ts`
+
+## Implementation
+- Use a consistent request pattern with proper error handling
+- Export functions that abstract API calls (not direct fetch/axios usage in components)
+- Define return types for all API functions
+
+## Example Pattern
+```typescript
+// src/api/diaryApi.ts
+import { request } from '../utils/request';
+import { Diary, DiaryCreateParams } from '../types/diary';
+
+// Get all diaries
+export const getDiaries = async (): Promise<Diary[]> => {
+  return request.get('/diaries');
+};
+
+// Get diary by ID
+export const getDiaryById = async (id: string): Promise<Diary> => {
+  return request.get(`/diaries/${id}`);
+};
+
+// Create new diary
+export const createDiary = async (params: DiaryCreateParams): Promise<Diary> => {
+  return request.post('/diaries', params);
+};
+```
+
+## Usage
+- Import API functions directly in components or services
+- Never make direct HTTP requests from components
+- Handle loading states and errors at the component level
+

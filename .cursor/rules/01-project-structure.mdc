@@ -1,0 +1,26 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Project Structure
+
+This Taro+React project follows a structured organization to ensure maintainability and scalability:
+
+- [src/](mdc:src) - Main source code directory
+  - [api/](mdc:src/api) - API service modules for all backend communication
+  - [assets/](mdc:src/assets) - Static assets like images, icons, and fonts
+  - [components/](mdc:src/components) - Reusable UI components
+  - [pages/](mdc:src/pages) - Page components corresponding to routes
+  - [store/](mdc:src/store) - State management (Redux/Mobx)
+  - [types/](mdc:src/types) - TypeScript type definitions
+  - [utils/](mdc:src/utils) - Utility functions and helpers
+
+## Entry Points
+- [app.ts](mdc:src/app.ts) - Main application entry point
+- [app.config.ts](mdc:src/app.config.ts) - Taro application configuration
+
+## Configuration Files
+- [project.config.json](mdc:project.config.json) - WeChat Mini Program configuration
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript configuration
+

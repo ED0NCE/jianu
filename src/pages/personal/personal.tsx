@@ -9,7 +9,8 @@ import CustomTabBar from '../../components/CustomTabBar'
 import { useUserStore } from '../../store/userStore'
 import { checkLogin } from '../../utils/auth'
 import { FillinOutline } from 'antd-mobile-icons';
-import { getLikedTravelogues } from '../../utils/likeStorage';
+// 从API模块中导入获取点赞列表方法
+import { toggleLike } from '../../api/user';
 
 interface Profile {
   userid: string
@@ -31,46 +32,46 @@ const mockProfile: Profile = {
 
 const mockPosts: WaterfallCardProps[] = [
   {
-    id: 'travelogue001',
+    travel_id: 'travelogue001',
     tag: '日本',
-    imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
+    images: ['https://images.unsplash.com/photo-1469474968028-56623f02e42e'],
     title: '圣托里尼的日落时光',
     days: 0,
-    people: 0,
-    cost: '',
+    participants: 0,
+    expenditure: '',
     likes: 1200,
     date: '2023-05-15',
   },
   {
-    id: 'travelogue102',
+    travel_id: 'travelogue102',
     tag: '马来西亚',
-    imageUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429',
+    images: ['https://images.unsplash.com/photo-1500534314209-a25ddb2bd429'],
     title: '悉尼歌剧院黄昏悉尼歌剧院黄昏悉尼歌剧院黄昏悉尼歌剧院黄昏悉尼歌剧院黄昏',
     days: 0,
-    people: 0,
-    cost: '',
+    participants: 0,
+    expenditure: '',
     likes: 1300,
     date: '2023-02-10',
   },
   {
-    id: 'travelogue103',
+    travel_id: 'travelogue103',
     tag: '泰国',
-    imageUrl: 'https://images.unsplash.com/photo-1516815231560-8f41ec531527',
+    images: ['https://images.unsplash.com/photo-1516815231560-8f41ec531527'],
     title: '清迈的宁静时光',
     days: 0,
-    people: 0,
-    cost: '',
+    participants: 0,
+    expenditure: '',
     likes: 980,
     date: '2023-04-12',
   },
   {
-    id: 'travelogue104',
+    travel_id: 'travelogue104',
     tag: '法国',
-    imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34',
+    images: ['https://images.unsplash.com/photo-1502602898657-3e91760cbb34'],
     title: '巴黎铁塔的黄昏',
     days: 0,
-    people: 0,
-    cost: '',
+    participants: 0,
+    expenditure: '',
     likes: 1450,
     date: '2023-03-25',
   },
@@ -89,7 +90,7 @@ const PersonalPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   // 从全局状态获取用户资料和登出方法 - store已自动从本地存储初始化
-  const { profile, isLoggedIn, logout, updateProfile } = useUserStore()
+  const { profile, isLoggedIn, localLogout, updateProfile } = useUserStore()
 
   // 检查登录状态
   useEffect(() => {
@@ -117,10 +118,38 @@ const PersonalPage: React.FC = () => {
   // 加载喜欢的游记
   const loadLikedPosts = () => {
     setIsLoading(true);
-    // 获取喜欢的游记数据
-    const liked = getLikedTravelogues();
-    setLikedPosts(liked);
-    setIsLoading(false);
+    // 从API获取喜欢的游记列表，而不是从本地存储
+    // 假设这个API会返回用户喜欢的所有游记列表
+    Taro.request({
+      url: 'https://your-backend-domain.com/api/user/likes',
+      method: 'GET',
+      header: {
+        'content-type': 'application/json',
+        'Authorization': `Bearer ${Taro.getStorageSync('token')}`
+      },
+      success: function (res) {
+        if (res.statusCode === 200) {
+          // 假设API返回的数据结构是包含游记列表的对象
+          setLikedPosts(res.data || []);
+        } else {
+          Taro.showToast({
+            title: '获取点赞列表失败',
+            icon: 'none'
+          });
+        }
+      },
+      fail: function () {
+        Taro.showToast({
+          title: '网络请求失败',
+          icon: 'none'
+        });
+        // 开发环境下可以使用模拟数据
+        setLikedPosts([]);
+      },
+      complete: function () {
+        setIsLoading(false);
+      }
+    });
   }
 
   // 当切换到"我喜欢"标签时，加载喜欢的游记
@@ -142,16 +171,18 @@ const PersonalPage: React.FC = () => {
   const handleLikeChange = (index: number, newLikes: number) => {
     // 无论在哪个标签页，都更新当前显示的游记列表
     if (activeTab === 3) {
-      // 在"我喜欢"标签页中，立即获取最新的喜欢列表
-      // 使用setTimeout确保在本地存储更新后获取数据
+      // 在"我喜欢"标签页中，需要重新获取点赞列表
+      // 这里可以给一个短暂的延迟，让API有时间处理完请求
       setTimeout(() => {
         loadLikedPosts();
-      }, 100);
+      }, 300);
     } else {
       // 其他标签页正常更新状态
       setPosts(prevPosts => {
         const updatedPosts = [...prevPosts]
-        updatedPosts[index].likes = newLikes
+        if (updatedPosts[index]) {
+          updatedPosts[index].likes = newLikes
+        }
         return updatedPosts
       })
     }
@@ -190,7 +221,7 @@ const PersonalPage: React.FC = () => {
       success: res => {
         if (res.confirm) {
           // 使用userStore的logout方法退出登录
-          logout()
+          localLogout()
 
           Taro.showToast({
             title: '成功退出登录',
@@ -234,7 +265,7 @@ const PersonalPage: React.FC = () => {
           filePath: tempFilePaths,
           name: 'avatar',
           formData: {
-            'userId': profile.userid
+            'nickname': profile.nickname
           },
           success: function (uploadRes) {
             Taro.hideLoading()
@@ -336,7 +367,7 @@ const PersonalPage: React.FC = () => {
             onClick={handleAvatarUpload}
           />
           <View className="info">
-            <View className="name">{profile.name}</View>
+            <View className="name">{profile.nickname}</View>
             <View className="meta">
               <Text>{profile.travels} 游记</Text>
               <Text className="meta-likes">{profile.likes} 获赞</Text>
@@ -372,9 +403,9 @@ const PersonalPage: React.FC = () => {
             <View className="wf-column">
               {currentPosts.filter((_, i) => i % 2 === 0).map((item, idx) => (
                 <WaterfallCard
-                  key={`${activeTab}-${idx}-${item.id}`}
+                  key={`${activeTab}-${idx}-${item.travel_id}`}
                   {...item}
-                  onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+                  onClick={item.travel_id ? () => handleCardClick(item.travel_id!) : undefined}
                   onLikeChange={(newLikes) => handleLikeChange(idx * 2, newLikes)}
                 />
               ))}
@@ -382,9 +413,9 @@ const PersonalPage: React.FC = () => {
             <View className="wf-column">
               {currentPosts.filter((_, i) => i % 2 === 1).map((item, idx) => (
                 <WaterfallCard
-                  key={`${activeTab}-${idx}-${item.id}`}
+                  key={`${activeTab}-${idx}-${item.travel_id}`}
                   {...item}
-                  onClick={item.id ? () => handleCardClick(item.id!) : undefined}
+                  onClick={item.travel_id ? () => handleCardClick(item.travel_id!) : undefined}
                   onLikeChange={(newLikes) => handleLikeChange(idx * 2 + 1, newLikes)}
                 />
               ))}

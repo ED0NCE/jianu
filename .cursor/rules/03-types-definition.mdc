@@ -1,0 +1,63 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Types Definition
+
+All TypeScript types and interfaces must be defined in the [types/](mdc:src/types) directory following these guidelines:
+
+## Structure
+- Group related types in domain-specific files
+- Example: `diary.ts`, `user.ts`, `destination.ts`
+
+## Implementation
+- Use interfaces for object shapes that may be extended
+- Use type aliases for unions, intersections, or simple type definitions
+- Export all types for reuse across the application
+- Add JSDoc comments for complex types
+
+## Example Pattern
+```typescript
+// src/types/diary.ts
+
+/**
+ * Represents a travel diary entry
+ */
+export interface Diary {
+  id: string;
+  title: string;
+  content: string;
+  location: Location;
+  images: string[];
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+}
+
+/**
+ * Parameters required to create a new diary
+ */
+export type DiaryCreateParams = Omit<Diary, 'id' | 'createdAt' | 'updatedAt'>;
+
+/**
+ * Parameters for updating an existing diary
+ */
+export type DiaryUpdateParams = Partial<DiaryCreateParams>;
+
+/**
+ * Location information for a diary entry
+ */
+export interface Location {
+  name: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+```
+
+## Usage
+- Import types directly where needed
+- Always define proper types for component props
+- Avoid using `any` type - use proper typing or `unknown` if necessary
+

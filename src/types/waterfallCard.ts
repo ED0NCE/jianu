@@ -29,6 +29,8 @@ export interface WaterfallCardProps {
   avatarUrl?: string
   /** 作者昵称 */
   nickname?: string
+  /** 是否点赞 */
+  is_liked?: boolean
   /** 点击回调 */
   onClick?: () => void
   /** 点赞状态变化的回调函数 */

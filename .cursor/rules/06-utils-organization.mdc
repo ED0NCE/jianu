@@ -1,0 +1,130 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Utility Functions Organization
+
+All utility functions should be organized in the [utils/](mdc:src/utils) directory following these guidelines:
+
+## Structure
+- Group utility functions by domain or purpose
+- Create separate files for different categories of utilities
+- Example: `dateUtils.ts`, `formatUtils.ts`, `validationUtils.ts`
+
+## Implementation
+- Keep utility functions pure (no side effects)
+- Write functions that do one thing well
+- Properly type all function parameters and return values
+- Add JSDoc comments for complex functions
+
+## Request Utility
+A centralized request utility should be created to handle all API requests:
+
+```typescript
+// src/utils/request.ts
+import Taro from '@tarojs/taro';
+
+interface RequestOptions extends Omit<Taro.request.Option, 'url' | 'success' | 'fail'> {
+  baseURL?: string;
+}
+
+interface RequestResponse<T = any> {
+  data: T;
+  statusCode: number;
+  header: Record<string, string>;
+}
+
+const DEFAULT_OPTIONS: RequestOptions = {
+  baseURL: 'https://api.example.com',
+  timeout: 10000,
+};
+
+class Request {
+  private options: RequestOptions;
+
+  constructor(options: RequestOptions = {}) {
+    this.options = { ...DEFAULT_OPTIONS, ...options };
+  }
+
+  async request<T = any>(url: string, options: RequestOptions = {}): Promise<T> {
+    const { baseURL, ...requestOptions } = { ...this.options, ...options };
+    const fullUrl = baseURL ? `${baseURL}${url}` : url;
+
+    try {
+      const response = await Taro.request<T>({
+        url: fullUrl,
+        ...requestOptions,
+      });
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.data;
+      }
+
+      throw this.handleError(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  get<T = any>(url: string, params?: Record<string, any>, options?: RequestOptions): Promise<T> {
+    return this.request<T>(url, { ...options, method: 'GET', data: params });
+  }
+
+  post<T = any>(url: string, data?: any, options?: RequestOptions): Promise<T> {
+    return this.request<T>(url, { ...options, method: 'POST', data });
+  }
+
+  put<T = any>(url: string, data?: any, options?: RequestOptions): Promise<T> {
+    return this.request<T>(url, { ...options, method: 'PUT', data });
+  }
+
+  delete<T = any>(url: string, options?: RequestOptions): Promise<T> {
+    return this.request<T>(url, { ...options, method: 'DELETE' });
+  }
+
+  private handleError(error: any): Error {
+    if (error.errMsg) {
+      return new Error(error.errMsg);
+    }
+    return error instanceof Error ? error : new Error(JSON.stringify(error));
+  }
+}
+
+export const request = new Request();
+```
+
+## Example Utility Functions
+
+```typescript
+// src/utils/dateUtils.ts
+import dayjs from 'dayjs';
+
+/**
+ * Formats a date string to a human-readable format
+ * @param dateString ISO date string
+ * @param format Output format (default: 'YYYY-MM-DD')
+ * @returns Formatted date string
+ */
+export const formatDate = (dateString: string, format = 'YYYY-MM-DD'): string => {
+  return dayjs(dateString).format(format);
+};
+
+/**
+ * Gets relative time (e.g., "2 days ago")
+ * @param dateString ISO date string
+ * @returns Relative time string
+ */
+export const getRelativeTime = (dateString: string): string => {
+  const date = dayjs(dateString);
+  const now = dayjs();
+  const diffDays = now.diff(date, 'day');
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 30) return `${diffDays} days ago`;
+
+  return date.format('YYYY-MM-DD');
+};
+```
+

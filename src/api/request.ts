@@ -63,18 +63,16 @@ export const http = {
       if (response.statusCode === 200) {
         return response.data;
       } else if (response.statusCode === 401) {
-        // 未登录错误仍然显示
+        // 未登录
         Taro.showToast({
           title: '请先登录',
           icon: 'none'
         });
         throw new Error('未登录');
       } else {
-        // 其他错误静默处理
         throw new Error('请求失败');
       }
     } catch (error) {
-      // 调试模式打印错误
       if (DEBUG) {
         debugLog('Error', {
           url,
@@ -82,7 +80,6 @@ export const http = {
           error: error.message
         });
       }
-      // 所有错误都静默处理，只在控制台记录
       console.error('Request failed:', error);
       throw error;
     }

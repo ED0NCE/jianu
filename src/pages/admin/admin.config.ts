@@ -1,5 +1,5 @@
 export default {
-  navigationBarTitleText: '管理页面',
+  navigationBarTitleText: '简游-管理端',
   enablePullDownRefresh: true,
   backgroundTextStyle: 'dark'
 } 

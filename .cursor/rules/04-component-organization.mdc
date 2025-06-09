@@ -1,0 +1,77 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Component Organization
+
+All UI components should be organized in the [components/](mdc:src/components) directory following these guidelines:
+
+## Structure
+- Group components by feature or domain
+- Create subdirectories for related components
+- Use index.ts files to export components from directories
+
+Example structure:
+```
+components/
+├── common/
+│   ├── Button/
+│   │   ├── Button.tsx
+│   │   ├── Button.scss
+│   │   └── index.ts
+│   ├── Card/
+│   └── ...
+├── diary/
+│   ├── DiaryCard/
+│   ├── DiaryForm/
+│   └── ...
+└── layout/
+    ├── Header/
+    ├── Footer/
+    └── ...
+```
+
+## Implementation
+- Each component should have its own directory with related files
+- Use TypeScript for all components with properly typed props
+- Separate component logic from presentation when appropriate
+- Keep components focused on a single responsibility
+
+## Component Pattern
+```typescript
+// src/components/diary/DiaryCard/DiaryCard.tsx
+import { FC } from 'react';
+import { View, Text, Image } from '@tarojs/components';
+import { Diary } from '../../../types/diary';
+import './DiaryCard.scss';
+
+interface DiaryCardProps {
+  diary: Diary;
+  onPress?: (id: string) => void;
+}
+
+const DiaryCard: FC<DiaryCardProps> = ({ diary, onPress }) => {
+  const handlePress = () => {
+    onPress?.(diary.id);
+  };
+
+  return (
+    <View className="diary-card" onClick={handlePress}>
+      <Image className="diary-card__image" src={diary.images[0]} />
+      <View className="diary-card__content">
+        <Text className="diary-card__title">{diary.title}</Text>
+        <Text className="diary-card__location">{diary.location.name}</Text>
+      </View>
+    </View>
+  );
+};
+
+export default DiaryCard;
+```
+
+## Usage
+- Import components using absolute paths or aliases when possible
+- Keep components reusable by avoiding hardcoded values
+- Use component composition over complex conditional rendering
+

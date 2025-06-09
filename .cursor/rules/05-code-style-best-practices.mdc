@@ -1,0 +1,77 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Code Style and Best Practices
+
+This project follows strict code style and best practices to ensure maintainability and consistency.
+
+## General Guidelines
+- Follow TypeScript best practices
+- Use functional components with hooks instead of class components
+- Implement proper error handling for all async operations
+- Write self-documenting code with meaningful variable and function names
+
+## State Management
+- Use React hooks for local component state
+- Use [store/](mdc:src/store) for global state management
+- Avoid prop drilling by using context or state management libraries
+
+## File Naming
+- Use PascalCase for component files: `DiaryCard.tsx`
+- Use camelCase for utility and service files: `dateUtils.ts`
+
+## Code Organization
+- Keep files focused on a single responsibility
+- Group related functions and constants
+
+## Styling
+- Use SCSS for styling
+- Follow BEM naming convention for CSS classes
+- Use variables for colors, spacing, and typography
+
+## Performance
+- Memoize expensive calculations with useMemo
+- Optimize re-renders with React.memo and useCallback
+- Implement proper loading states and pagination for data fetching
+
+## Testing
+- Write unit tests for utility functions
+- Write component tests for critical UI components
+- Mock API calls in tests
+
+## Example
+```typescript
+// Good practice
+import { useState, useCallback } from 'react';
+import { View } from '@tarojs/components';
+import { getDiaries } from '../../api/diaryApi';
+import { Diary } from '../../types/diary';
+import { DiaryList } from '../../components/diary/DiaryList';
+import { ErrorMessage } from '../../components/common/ErrorMessage';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import './index.scss';
+
+const DiaryListPage = () => {
+  const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDiaries = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getDiaries();
+      setDiaries(data);
+    } catch (err) {
+      setError('Failed to load diaries');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Component implementation...
+};
+

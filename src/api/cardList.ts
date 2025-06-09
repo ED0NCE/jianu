@@ -5,7 +5,7 @@ export const getTravelogueList = (params: {
   page: number;
   limit: number;
   status: string;
-}) => http.get(`/travelogue/list?page=${params.page}&limit=${params.limit}&status=${params.status}`);
+}) => http.get(`/travelogue/list`, {data: params});
 
 // 获取用户游记列表(status: 已发布/审核中/未通过/我喜欢)
 export const getUserTravelogueList = (params: {
@@ -23,9 +23,5 @@ export const searchTravelogue = (params:{
   status: string;
 } ) => http.get(`/travelogue/search`, {data: params});
 
-// 点赞游记
-export const asyncAddLikedTravelogue = (travel_id: string) => http.post(`/travelogue/addLike/${travel_id}`);
 
-// 取消点赞游记
-export const asyncRemoveLikedTravelogue = (travel_id: string) => http.post(`/travelogue/cancelLike/${travel_id}`);
 
